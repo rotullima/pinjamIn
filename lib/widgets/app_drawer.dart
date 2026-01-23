@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../screen/dasboard_screen.dart';
+import '../screen/admin/user_management_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isOpen;
@@ -85,14 +86,28 @@ class AppDrawer extends StatelessWidget {
 
     if (role == 'admin') {
       menuItems.addAll([
-        {'icon': Icons.build_outlined, 'label': 'Tools List', 'onTap': () {}},
-        {'icon': Icons.person_outline, 'label': 'User', 'onTap': () {}},
+        {
+          'icon': Icons.build_outlined, 
+          'label': 'Tools List', 
+          'onTap': () {}},
+        {
+          'icon': Icons.person_outline, 
+          'label': 'User', 
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UserManagementScreen()),
+          );
+          }},
         {
           'icon': Icons.receipt_long_outlined,
           'label': 'Log Activity',
           'onTap': () {},
         },
-        {'icon': Icons.list_alt, 'label': 'Loan List', 'onTap': () {}},
+        {
+          'icon': Icons.list_alt, 
+          'label': 'Loan List', 
+          'onTap': () {}},
       ]);
     } else if (role == 'officer') {
       menuItems.addAll([
@@ -106,7 +121,10 @@ class AppDrawer extends StatelessWidget {
           'label': 'Approved Loan List',
           'onTap': () {},
         },
-        {'icon': Icons.outbond, 'label': 'Borrowed Loan List', 'onTap': () {}},
+        {
+          'icon': Icons.outbond, 
+          'label': 'Borrowed Loan List', 
+          'onTap': () {}},
         {
           'icon': Icons.attach_money,
           'label': 'Penalty Loan List',
@@ -115,7 +133,10 @@ class AppDrawer extends StatelessWidget {
       ]);
     } else if (role == 'borrower') {
       menuItems.addAll([
-        {'icon': Icons.build_outlined, 'label': 'Tool List', 'onTap': () {}},
+        {
+          'icon': Icons.build_outlined, 
+          'label': 'Tool List', 
+          'onTap': () {}},
         {
           'icon': Icons.access_time,
           'label': 'Pending Loan List',
@@ -126,7 +147,10 @@ class AppDrawer extends StatelessWidget {
           'label': 'Approved Loan List',
           'onTap': () {},
         },
-        {'icon': Icons.outbond, 'label': 'Borrowed Loan List', 'onTap': () {}},
+        {
+          'icon': Icons.outbond, 
+          'label': 'Borrowed Loan List', 
+          'onTap': () {}},
         {
           'icon': Icons.attach_money,
           'label': 'Penalty Loan List',

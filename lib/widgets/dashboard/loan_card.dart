@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/loan_dummy.dart';
+import '../../dummy/dashboard/loan_dummy.dart';
 
 class LoanListCard extends StatelessWidget {
   final LoanDummy data;

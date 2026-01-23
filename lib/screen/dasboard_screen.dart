@@ -4,8 +4,9 @@ import '../widgets/app_header.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dashboard/stat_card.dart';
 import '../widgets/dashboard/loan_card.dart';
-import '../dummy/dashboard_stats_dummy.dart';
-import '../dummy/loan_dummy.dart';
+import '../dummy/dashboard/dashboard_stats_dummy.dart';
+import '../dummy/dashboard/loan_dummy.dart';
+import '../services/auth/user_session.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,8 +20,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  final String currentRole = 'admin';
-  final String currentBorrowerName = 'melati';
+  final String currentRole = UserSession.role;
+  final String currentBorrowerName = UserSession.name;
 
   @override
   void initState() {
@@ -116,6 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: SizedBox(
+                            height: 35,
                             width: 200,
                             child: TextField(
                               controller: _searchController,
