@@ -1,32 +1,36 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/user/user_dummy.dart';
+import '../../dummy/tools/tools_dummy.dart';
+import '../../dummy/tools/category_dummy.dart';
 
-class UserFormSheet extends StatefulWidget {
-  final UserDummy? user;
+class ToolFormSheet extends StatefulWidget {
+  final ToolDummy? tool;
 
-  const UserFormSheet({super.key, this.user});
+  const ToolFormSheet({super.key, this.tool});
 
   @override
-  State<UserFormSheet> createState() => _UserFormSheetState();
+  State<ToolFormSheet> createState() => _ToolFormSheetState();
+  
 }
 
-class _UserFormSheetState extends State<UserFormSheet> {
+final List<String> categoryNames =
+    categoryDummies.map((c) => c.name).toList();
+
+class _ToolFormSheetState extends State<ToolFormSheet> {
   late TextEditingController nameCtrl;
-  late TextEditingController roleCtrl;
-  late TextEditingController emailCtrl;
-  late TextEditingController passwordCtrl;
-  String selectedRole = 'admin';
+  late TextEditingController stockCtrl;
+  String selectedCategory = categoryNames.first;
+  String selectedCondition = 'good';
 
   @override
   void initState() {
     super.initState();
-    nameCtrl = TextEditingController(text: widget.user?.name ?? '');
-    roleCtrl = TextEditingController(text: widget.user?.role ?? '');
-    emailCtrl = TextEditingController(text: widget.user?.email ?? '');
-    passwordCtrl = TextEditingController(text: widget.user?.password ?? '');
-
-    selectedRole = widget.user?.role ?? 'admin';
+    nameCtrl = TextEditingController(text: widget.tool?.name ?? '');
+    stockCtrl = TextEditingController(
+      text: widget.tool?.stock.toString() ?? '',
+    );
+    selectedCategory = widget.tool?.category ?? categoryNames.first;
+    selectedCondition = widget.tool?.condition ?? 'good';
   }
 
   @override
@@ -40,13 +44,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -54,7 +51,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
             children: [
               Center(
                 child: Text(
-                  widget.user == null ? 'Add New User' : 'Update User',
+                  widget.tool == null ? 'Add New Tools' : 'Update Tools',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -65,9 +62,19 @@ class _UserFormSheetState extends State<UserFormSheet> {
               const SizedBox(height: 20),
 
               _input('Name', nameCtrl),
-              _roleDropdown(),
-              _input('Email', emailCtrl),
-              _input('Password', passwordCtrl),
+              _dropdown(
+                'Category',
+                selectedCategory,
+                categoryNames,
+                (v) => setState(() => selectedCategory = v),
+              ),
+              _input('Stock', stockCtrl, number: true),
+              _dropdown(
+                'Condition',
+                selectedCondition,
+                ['good', 'in repair'],
+                (v) => setState(() => selectedCondition = v),
+              ),
 
               const SizedBox(height: 24),
 
@@ -89,11 +96,12 @@ class _UserFormSheetState extends State<UserFormSheet> {
                       onTap: () {
                         Navigator.pop(
                           context,
-                          UserDummy(
+                          ToolDummy(
                             name: nameCtrl.text,
-                            role: selectedRole,
-                            email: emailCtrl.text,
-                            password: passwordCtrl.text,
+                            category: selectedCategory,
+                            stock: int.tryParse(stockCtrl.text) ?? 0,
+                            condition: selectedCondition,
+                            imagePath: 'assets/images/dummy.png',
                           ),
                         );
                       },
@@ -108,7 +116,11 @@ class _UserFormSheetState extends State<UserFormSheet> {
     );
   }
 
-  Widget _input(String label, TextEditingController ctrl) {
+  Widget _input(
+    String label,
+    TextEditingController ctrl, {
+    bool number = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -153,23 +165,24 @@ class _UserFormSheetState extends State<UserFormSheet> {
     );
   }
 
-  Widget _roleDropdown() {
+  Widget _dropdown(
+    String label,
+    String value,
+    List<String> items,
+    ValueChanged<String> onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'As',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-          ),
+          Text(label),
           const SizedBox(height: 6),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              color: AppColors.background,
               borderRadius: BorderRadius.circular(14),
+              color: AppColors.background,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.15),
@@ -180,18 +193,12 @@ class _UserFormSheetState extends State<UserFormSheet> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                value: selectedRole,
+                value: value,
                 isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                  DropdownMenuItem(value: 'officer', child: Text('Officer')),
-                  DropdownMenuItem(value: 'borrower', child: Text('Borrower')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedRole = value!;
-                  });
-                },
+                items: items
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (v) => onChanged(v!),
               ),
             ),
           ),

@@ -1,32 +1,29 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/user/user_dummy.dart';
+import '../../dummy/tools/category_dummy.dart';
 
-class UserFormSheet extends StatefulWidget {
-  final UserDummy? user;
+class CategoryFormSheet extends StatefulWidget {
+  final CategoryDummy? category;
 
-  const UserFormSheet({super.key, this.user});
+  const CategoryFormSheet({super.key, this.category});
 
   @override
-  State<UserFormSheet> createState() => _UserFormSheetState();
+  State<CategoryFormSheet> createState() => _CategoryFormSheetState();
 }
 
-class _UserFormSheetState extends State<UserFormSheet> {
+class _CategoryFormSheetState extends State<CategoryFormSheet> {
   late TextEditingController nameCtrl;
-  late TextEditingController roleCtrl;
-  late TextEditingController emailCtrl;
-  late TextEditingController passwordCtrl;
-  String selectedRole = 'admin';
 
   @override
   void initState() {
     super.initState();
-    nameCtrl = TextEditingController(text: widget.user?.name ?? '');
-    roleCtrl = TextEditingController(text: widget.user?.role ?? '');
-    emailCtrl = TextEditingController(text: widget.user?.email ?? '');
-    passwordCtrl = TextEditingController(text: widget.user?.password ?? '');
+    nameCtrl = TextEditingController(text: widget.category?.name ?? '');
+  }
 
-    selectedRole = widget.user?.role ?? 'admin';
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,13 +37,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -54,30 +44,24 @@ class _UserFormSheetState extends State<UserFormSheet> {
             children: [
               Center(
                 child: Text(
-                  widget.user == null ? 'Add New User' : 'Update User',
+                  widget.category == null
+                      ? 'Add New Tools'
+                      : 'Update Tools',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              _input('Name', nameCtrl),
-              _roleDropdown(),
-              _input('Email', emailCtrl),
-              _input('Password', passwordCtrl),
-
+              _input('Name:', nameCtrl),
               const SizedBox(height: 24),
-
               Row(
                 children: [
                   Expanded(
                     child: _actionButton(
-                      label: 'Back',
-                      icon: Icons.close,
-                      outlined: true,
+                      label: 'Cancel',
+                      icon: Icons.refresh,
                       onTap: () => Navigator.pop(context),
                     ),
                   ),
@@ -85,15 +69,16 @@ class _UserFormSheetState extends State<UserFormSheet> {
                   Expanded(
                     child: _actionButton(
                       label: 'Done',
-                      icon: Icons.check,
+                      icon: Icons.check_circle_outline,
                       onTap: () {
+                        if (nameCtrl.text.trim().isEmpty) {
+                          return;
+                        }
                         Navigator.pop(
                           context,
-                          UserDummy(
-                            name: nameCtrl.text,
-                            role: selectedRole,
-                            email: emailCtrl.text,
-                            password: passwordCtrl.text,
+                          CategoryDummy(
+                            name: nameCtrl.text.trim(),
+                            toolCount: widget.category?.toolCount ?? 0,
                           ),
                         );
                       },
@@ -108,7 +93,10 @@ class _UserFormSheetState extends State<UserFormSheet> {
     );
   }
 
-  Widget _input(String label, TextEditingController ctrl) {
+  Widget _input(
+    String label,
+    TextEditingController ctrl,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -119,7 +107,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 6),
-
           Container(
             decoration: BoxDecoration(
               color: AppColors.background,
@@ -153,58 +140,10 @@ class _UserFormSheetState extends State<UserFormSheet> {
     );
   }
 
-  Widget _roleDropdown() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'As',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 6),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedRole,
-                isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                  DropdownMenuItem(value: 'officer', child: Text('Officer')),
-                  DropdownMenuItem(value: 'borrower', child: Text('Borrower')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedRole = value!;
-                  });
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _actionButton({
     required String label,
     required IconData icon,
     required VoidCallback onTap,
-    bool outlined = false,
   }) {
     return SizedBox(
       height: 42,
@@ -213,7 +152,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
         icon: Icon(icon, size: 18, color: AppColors.background),
         label: Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             color: AppColors.background,
             fontWeight: FontWeight.w600,
           ),

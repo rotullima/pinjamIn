@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../screen/dasboard_screen.dart';
 import '../screen/admin/user_management_screen.dart';
+import '../screen/admin/tool_management_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isOpen;
@@ -89,7 +90,13 @@ class AppDrawer extends StatelessWidget {
         {
           'icon': Icons.build_outlined, 
           'label': 'Tools List', 
-          'onTap': () {}},
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ToolManagementScreen()),
+          );
+          }
+        },
         {
           'icon': Icons.person_outline, 
           'label': 'User', 
@@ -98,7 +105,8 @@ class AppDrawer extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => const UserManagementScreen()),
           );
-          }},
+          }
+        },
         {
           'icon': Icons.receipt_long_outlined,
           'label': 'Log Activity',
