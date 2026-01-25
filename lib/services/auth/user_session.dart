@@ -1,4 +1,4 @@
 class UserSession {
-  static String role = 'admin'; 
+  static String role = 'officer'; 
   static String name = 'melati';
 }

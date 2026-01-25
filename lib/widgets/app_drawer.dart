@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pinjamln/screen/officer/approved_loan_screen.dart';
+import 'package:pinjamln/screen/officer/penalty_loan_screen.dart';
+import 'package:pinjamln/screen/officer/pending_loan_screen.dart';
+import 'package:pinjamln/screen/officer/returning_loan_screen.dart';
 import '../constants/app_colors.dart';
-import '../screen/dasboard_screen.dart';
+import '../screen/dashboard_screen.dart';
 import '../screen/admin/user_management_screen.dart';
 import '../screen/admin/tool_management_screen.dart';
 
@@ -122,21 +126,42 @@ class AppDrawer extends StatelessWidget {
         {
           'icon': Icons.access_time,
           'label': 'Pending Loan List',
-          'onTap': () {},
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const PendingLoanScreen()),
+          );
+          },
         },
         {
-          'icon': Icons.calendar_month,
+          'icon': Icons.event_available,
           'label': 'Approved Loan List',
-          'onTap': () {},
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ApprovedLoanScreen()),
+          );
+          },
         },
         {
-          'icon': Icons.outbond, 
-          'label': 'Borrowed Loan List', 
-          'onTap': () {}},
+          'icon': Icons.south_west, 
+          'label': 'Returning Loan List', 
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ReturningLoanScreen()),
+          );
+          }
+        },
         {
           'icon': Icons.attach_money,
           'label': 'Penalty Loan List',
-          'onTap': () {},
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const PenaltyLoanScreen()),
+          );
+          },
         },
       ]);
     } else if (role == 'borrower') {
@@ -151,12 +176,12 @@ class AppDrawer extends StatelessWidget {
           'onTap': () {},
         },
         {
-          'icon': Icons.calendar_month,
+          'icon': Icons.event_available,
           'label': 'Approved Loan List',
           'onTap': () {},
         },
         {
-          'icon': Icons.outbond, 
+          'icon': Icons.south_west, 
           'label': 'Borrowed Loan List', 
           'onTap': () {}},
         {

@@ -4,6 +4,7 @@ import 'package:pinjamln/screen/admin/fine_management_screen.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
+import '../../widgets/app_search_field.dart';
 import '../../services/auth/user_session.dart';
 import '../../dummy/tools/tools_dummy.dart';
 import '../../widgets/tools/tool_form_sheet.dart';
@@ -63,31 +64,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SizedBox(
-                        height: 38,
-                        width: 220,
-                        child: TextField(
-                          controller: _searchCtrl,
-                          decoration: InputDecoration(
-                            hintText: 'search...',
-                            hintStyle: TextStyle(color: AppColors.background),
-                            filled: true,
-                            fillColor: AppColors.secondary,
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.background,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          style: const TextStyle(color: AppColors.background),
-                        ),
-                      ),
-                    ),
+                    SearchField(controller: _searchCtrl),
 
                     Padding(
                       padding: const EdgeInsets.only(right: 80),

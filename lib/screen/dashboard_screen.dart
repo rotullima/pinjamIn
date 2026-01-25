@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/app_search_field.dart';
 import '../widgets/dashboard/stat_card.dart';
 import '../widgets/dashboard/loan_card.dart';
 import '../dummy/dashboard/dashboard_stats_dummy.dart';
-import '../dummy/dashboard/loan_dummy.dart';
+import '../dummy/loan_dummy.dart';
 import '../services/auth/user_session.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -114,39 +115,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         const SizedBox(height: 24),
 
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: SizedBox(
-                            height: 35,
-                            width: 200,
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'search...',
-                                hintStyle: TextStyle(
-                                  color: AppColors.background,
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.search,
-                                  color: AppColors.background,
-                                ),
-                                filled: true,
-                                fillColor: AppColors.secondary,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: AppColors.background,
-                              ),
-                              cursorColor: AppColors.background,
-                            ),
-                          ),
-                        ),
+                        SearchField(controller: _searchController),
+
                         const SizedBox(height: 16),
 
                         Expanded(

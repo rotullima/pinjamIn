@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
+import '../../widgets/app_search_field.dart';
 import '../../dummy/user/user_dummy.dart';
 import '../../widgets/user/user_form_sheet.dart';
 import '../../services/auth/user_session.dart';
@@ -67,36 +68,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: SizedBox(
-                        height: 38,
-                        width: 220,
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'search...',
-                            hintStyle: TextStyle(color: AppColors.background),
-                            filled: true,
-                            fillColor: AppColors.secondary,
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.background,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          style: const TextStyle(color: AppColors.background),
-                          cursorColor: AppColors.background,
-                        ),
-                      ),
-                    ),
+                    
+                    SearchField(controller: _searchController),
 
                     Padding(
                       padding: const EdgeInsets.only(right: 80),

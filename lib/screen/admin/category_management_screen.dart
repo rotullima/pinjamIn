@@ -5,6 +5,7 @@ import '../../widgets/app_drawer.dart';
 import '../../dummy/tools/category_dummy.dart';
 import '../../widgets/tools/category_form_sheet.dart';
 import '../../services/auth/user_session.dart';
+import '../../widgets/app_search_field.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -65,36 +66,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: SizedBox(
-                        height: 38,
-                        width: 220,
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'search...',
-                            hintStyle: TextStyle(color: AppColors.background),
-                            filled: true,
-                            fillColor: AppColors.secondary,
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.background,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          style: const TextStyle(color: AppColors.background),
-                          cursorColor: AppColors.background,
-                        ),
-                      ),
-                    ),
+
+                    SearchField(controller: _searchController),
+
                     Padding(
                       padding: const EdgeInsets.only(right: 80),
                       child: Container(

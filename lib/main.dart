@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'config/supabase_config.dart';
-import 'screen/admin/tool_management_screen.dart';
+import 'screen/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,12 +22,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: GoogleFonts.poppinsTextTheme(
-          ThemeData.light().textTheme, 
-        ),
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
         scaffoldBackgroundColor: const Color(0xFFF7FAFC),
       ),
-      home: const ToolManagementScreen(),
+      home: const DashboardScreen(),
     );
   }
 }

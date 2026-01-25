@@ -15,18 +15,18 @@ final List<FineDummy> fineDummies = [
   ),
   FineDummy(
     condition: 'Abrasion 10%',
-    fineAmount: 20.000,
+    fineAmount: 20000,
   ),
   FineDummy(
     condition: 'Abrasion 20%',
-    fineAmount: 40.000,
+    fineAmount: 40000,
   ),
   FineDummy(
     condition: 'Damage 80%',
-    fineAmount: 75.000,
+    fineAmount: 75000,
   ),
   FineDummy(
     condition: 'Damage 90%',
-    fineAmount: 90.000,
+    fineAmount: 90000,
   ),
 ];
