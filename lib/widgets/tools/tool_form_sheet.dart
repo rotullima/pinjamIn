@@ -97,6 +97,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                         Navigator.pop(
                           context,
                           ToolDummy(
+                            id: 4,
                             name: nameCtrl.text,
                             category: selectedCategory,
                             stock: int.tryParse(stockCtrl.text) ?? 0,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pinjamln/screen/borrower/borrowing_screen.dart';
+import 'package:pinjamln/screen/borrower/loan_list_screen.dart';
 import 'package:pinjamln/screen/officer/approved_loan_screen.dart';
 import 'package:pinjamln/screen/officer/penalty_loan_screen.dart';
 import 'package:pinjamln/screen/officer/pending_loan_screen.dart';
@@ -169,25 +171,22 @@ class AppDrawer extends StatelessWidget {
         {
           'icon': Icons.build_outlined, 
           'label': 'Tool List', 
-          'onTap': () {}},
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ToolBorrowScreen()),
+          );
+          }
+        },
         {
           'icon': Icons.access_time,
-          'label': 'Pending Loan List',
-          'onTap': () {},
-        },
-        {
-          'icon': Icons.event_available,
-          'label': 'Approved Loan List',
-          'onTap': () {},
-        },
-        {
-          'icon': Icons.south_west, 
-          'label': 'Borrowed Loan List', 
-          'onTap': () {}},
-        {
-          'icon': Icons.attach_money,
-          'label': 'Penalty Loan List',
-          'onTap': () {},
+          'label': 'Loan List',
+          'onTap': () {
+            Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoanListScreen()),
+          );
+          },
         },
       ]);
     }

@@ -3,7 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
-import '../../widgets/dashboard/loan_card.dart';
+import '../../widgets/loan_card.dart';
 import '../../widgets/return/loan_return_sheet.dart';
 import '../../dummy/loan_dummy.dart';
 import '../../models/loan_actions.dart';

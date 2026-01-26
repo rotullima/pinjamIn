@@ -1,4 +1,5 @@
 class ToolDummy {
+  final int id;
   final String name;
   final String category;
   final int stock;
@@ -6,6 +7,7 @@ class ToolDummy {
   final String imagePath;
 
   ToolDummy({
+    required this.id,
     required this.name,
     required this.category,
     required this.stock,
@@ -16,6 +18,7 @@ class ToolDummy {
 
 final List<ToolDummy> toolDummies = [
   ToolDummy(
+    id: 1,
     name: 'Terminal Block',
     category: 'Panel & Instalasi',
     stock: 2,
@@ -23,6 +26,7 @@ final List<ToolDummy> toolDummies = [
     imagePath: 'assets/terminal_block.png',
   ),
   ToolDummy(
+    id: 2,
     name: 'Test Pen',
     category: 'Ukur & Pengujian',
     stock: 6,
@@ -30,6 +34,7 @@ final List<ToolDummy> toolDummies = [
     imagePath: 'assets/test_pen.png',
   ),
   ToolDummy(
+    id: 2,
     name: 'Timah Solder',
     category: 'Solder & Perakitan',
     stock: 0,

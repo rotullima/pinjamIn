@@ -4,7 +4,7 @@ import '../widgets/app_header.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/app_search_field.dart';
 import '../widgets/dashboard/stat_card.dart';
-import '../widgets/dashboard/loan_card.dart';
+import '../widgets/loan_card.dart';
 import '../dummy/dashboard/dashboard_stats_dummy.dart';
 import '../dummy/loan_dummy.dart';
 import '../services/auth/user_session.dart';
@@ -58,7 +58,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .where(
             (loan) =>
                 loan.borrower.toLowerCase() ==
-                currentBorrowerName.toLowerCase(),
+                currentBorrowerName.toLowerCase() &&
+                (loan.status == 'pending' || loan.status == 'approved'),
           )
           .toList();
     }
@@ -68,6 +69,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .where((loan) => loan.borrower.toLowerCase().contains(_searchQuery))
           .toList();
     }
+
+    if (loans.length > 5) {
+    loans = loans.sublist(0, 5);
+  }
 
     return loans;
   }

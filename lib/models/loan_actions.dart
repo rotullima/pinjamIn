@@ -6,6 +6,7 @@ enum LoanActionType {
   pickup,
   check,
   pay,
+  returning
 }
 
 class LoanAction {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../constants/app_colors.dart';
-import '../../dummy/loan_dummy.dart';
-import '../../models/loan_actions.dart';
+import '../constants/app_colors.dart';
+import '../dummy/loan_dummy.dart';
+import '../models/loan_actions.dart';
 
 class LoanListCard extends StatelessWidget {
   final LoanDummy data;

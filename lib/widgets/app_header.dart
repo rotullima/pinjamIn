@@ -5,15 +5,18 @@ import '../screen/auth/loginscreen.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
   final VoidCallback? onProfileTap;
+  final bool showProfile;
 
   const AppHeader({
     super.key,
     required this.title,
-    required this.onToggle,
+    this.onToggle,
     this.onProfileTap,
+    this.showProfile = true,
   });
+
 
   static const String _userName = "Siti Umrotul";
   static const String _userRole = "Admin";
@@ -89,63 +92,62 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: kToolbarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+  height: 72, // lebih lega dari kToolbarHeight
+  padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          SizedBox(
-            width: 56,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 20, right: 4),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onToggle,
-                child: const Icon(
-                  Icons.chevron_right,
-                  size: 28,
-                  color: AppColors.secondary,
-                ),
-              ),
-            ),
-          ),
+          if (onToggle != null)
+  GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: onToggle,
+    child: const Icon(
+      Icons.chevron_right,
+      size: 28,
+      color: AppColors.secondary,
+    ),
+  )
+else
+  const SizedBox(width: 4),
 
           Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.start,
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ),
+  child: Padding(
+    padding: const EdgeInsets.only(left: 12),
+    child: Text(
+      title,
+      style: const TextStyle(
+        color: AppColors.primary,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+      ),
+    ),
+  ),
+),
 
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onProfileTap ?? () => _showProfileMenu(context),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.secondary, width: 2),
-                ),
-                child: const Icon(
-                  Icons.person_outline_rounded,
-                  color: AppColors.secondary,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
+
+          if (showProfile)
+  GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: onProfileTap ?? () => _showProfileMenu(context),
+    child: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.secondary, width: 2),
+      ),
+      child: const Icon(
+        Icons.person_outline_rounded,
+        color: AppColors.secondary,
+        size: 24,
+      ),
+    ),
+  ),
+
         ],
       ),
     );
   }
 
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+@override
+Size get preferredSize => const Size.fromHeight(72);
 }

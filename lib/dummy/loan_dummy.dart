@@ -36,7 +36,7 @@ class LoanItemDummy {
 
 final loanDummies = [
   LoanDummy(
-    borrower: 'kakcel',
+    borrower: 'melati',
     startDate: DateTime(2026, 1, 10),
     endDate: DateTime(2026, 1, 12),
     status: 'pending',
@@ -51,7 +51,7 @@ final loanDummies = [
   ),
 
   LoanDummy(
-    borrower: 'kingking',
+    borrower: 'melati',
     startDate: DateTime(2026, 1, 12),
     endDate: DateTime(2026, 1, 15),
     status: 'approved',
@@ -81,7 +81,7 @@ final loanDummies = [
   ),
 
   LoanDummy(
-    borrower: 'nud',
+    borrower: 'melati',
     startDate: DateTime(2026, 1, 21),
     endDate: DateTime(2026, 1, 25),
     status: 'returning',
@@ -111,6 +111,29 @@ final loanDummies = [
     startDate: DateTime(2026, 1, 18),
     endDate: DateTime(2026, 1, 20),
     status: 'penalty',
+    items: [LoanItemDummy(name: 'Terminal Block', qty: 1)],
+    conditionNote: 'Abrasion 20%',
+    fineAmount: 50000,
+    penaltyDays: 5,
+    isPaid: false,
+  ),
+
+  LoanDummy(
+    borrower: 'melati',
+    startDate: DateTime(2026, 1, 21),
+    endDate: DateTime(2026, 1, 24),
+    status: 'returned',
+    items: [LoanItemDummy(name: 'Test Pen', qty: 2)],
+    conditionNote: 'Abrasion 20%',
+    fineAmount: 50000,
+    penaltyDays: 1,
+    isPaid: false,
+  ),
+  LoanDummy(
+    borrower: 'bayu',
+    startDate: DateTime(2026, 1, 18),
+    endDate: DateTime(2026, 1, 20),
+    status: 'returned',
     items: [LoanItemDummy(name: 'Terminal Block', qty: 1)],
     conditionNote: 'Abrasion 20%',
     fineAmount: 50000,

@@ -17,6 +17,9 @@ IconData loanStatusIcon(String status) {
     case 'penalty':
       return Icons.attach_money;
 
+    case 'returned':
+      return Icons.check_circle;
+
     default:
       return Icons.help_outline;
   }
