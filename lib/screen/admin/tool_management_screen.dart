@@ -5,6 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
+import '../../widgets/confirm_delete_dialog.dart';
 import '../../services/auth/user_session.dart';
 import '../../dummy/tools/tools_dummy.dart';
 import '../../widgets/tools/tool_form_sheet.dart';
@@ -274,10 +275,17 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
                   onPressed: () => _openForm(tool),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete),
-                  color: AppColors.secondary,
+                  icon: const Icon(Icons.delete, color: AppColors.secondary),
                   onPressed: () {
-                    setState(() => tools.remove(tool));
+                    showDialog(
+                      context: context,
+                      builder: (_) => ConfirmDeleteDialog(
+                        message: 'Sure to remove this tool?',
+                        onConfirm: () {
+                          setState(() => tools.remove(tool));
+                        },
+                      ),
+                    );
                   },
                 ),
               ],

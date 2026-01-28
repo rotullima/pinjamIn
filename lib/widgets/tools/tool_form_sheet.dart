@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../dummy/tools/tools_dummy.dart';
 import '../../dummy/tools/category_dummy.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ToolFormSheet extends StatefulWidget {
   final ToolDummy? tool;
@@ -10,17 +12,32 @@ class ToolFormSheet extends StatefulWidget {
 
   @override
   State<ToolFormSheet> createState() => _ToolFormSheetState();
-  
 }
 
-final List<String> categoryNames =
-    categoryDummies.map((c) => c.name).toList();
+final List<String> categoryNames = categoryDummies.map((c) => c.name).toList();
 
 class _ToolFormSheetState extends State<ToolFormSheet> {
   late TextEditingController nameCtrl;
   late TextEditingController stockCtrl;
   String selectedCategory = categoryNames.first;
   String selectedCondition = 'good';
+  Uint8List? pickedImageBytes;
+
+  Future<void> _pickImage() async {
+  final picker = ImagePicker();
+  final XFile? image = await picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+  if (image == null) return;
+
+  final bytes = await image.readAsBytes();
+
+  setState(() {
+    pickedImageBytes = bytes;
+  });
+}
+
 
   @override
   void initState() {
@@ -58,6 +75,45 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                   ),
                 ),
               ),
+
+              SizedBox(height: 20),
+
+              GestureDetector(
+  onTap: _pickImage,
+  child: Container(
+    width: double.infinity,
+    height: 140,
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      color: AppColors.background,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.15),
+          blurRadius: 12,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: pickedImageBytes != null
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.memory(
+              pickedImageBytes!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            ),
+          )
+        : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.image_outlined, size: 36),
+              SizedBox(height: 6),
+              Text('Tap to upload image'),
+            ],
+          ),
+  ),
+),
 
               const SizedBox(height: 20),
 
@@ -102,7 +158,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                             category: selectedCategory,
                             stock: int.tryParse(stockCtrl.text) ?? 0,
                             condition: selectedCondition,
-                            imagePath: 'assets/images/dummy.png',
+                            imagePath: 'picked_image',
                           ),
                         );
                       },

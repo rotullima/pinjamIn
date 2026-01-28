@@ -3,26 +3,29 @@ import '../../constants/app_colors.dart';
 import '../../dummy/loan_dummy.dart';
 import '../../dummy/tools/fine_dummy.dart';
 import '../../models/loan_fine_state.dart';
-import '../../widgets/confirm_snackbar.dart';
+import '../confirm_snackbar.dart';
 
-class LoanReturnSheet extends StatefulWidget {
+class ReturningLoanSheet extends StatefulWidget {
   final LoanDummy loan;
 
-  const LoanReturnSheet({super.key, required this.loan});
+  const ReturningLoanSheet({super.key, required this.loan});
 
   @override
-  State<LoanReturnSheet> createState() => _LoanReturnSheetState();
+  State<ReturningLoanSheet> createState() => _ReturningLoanSheetState();
 }
 
-class _LoanReturnSheetState extends State<LoanReturnSheet> {
-  FineDummy? selectedFine;
+class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
+  late Map<String, FineDummy?> itemFines;
   final TextEditingController payCtrl = TextEditingController();
 
   late LoanFineState fineState;
 
   @override
+  @override
   void initState() {
     super.initState();
+
+    itemFines = {for (var item in widget.loan.items) item.name: null};
 
     final bool isPenalty = widget.loan.status == 'penalty';
 
@@ -35,16 +38,23 @@ class _LoanReturnSheetState extends State<LoanReturnSheet> {
             ((widget.loan.penaltyDays ?? 0) * 2500) +
             (widget.loan.fineAmount ?? 0).toInt(),
       );
-
-      if (widget.loan.conditionNote != null) {
-        selectedFine = fineDummies.firstWhere(
-          (f) => f.condition == widget.loan.conditionNote,
-          orElse: () => fineDummies.first,
-        );
-      }
     } else {
       fineState = _calculateLateFine(widget.loan.endDate);
     }
+  }
+
+  void _recalculateFine() {
+    final conditionTotal = itemFines.values.fold<int>(
+      0,
+      (sum, f) => sum + (f?.fineAmount.toInt() ?? 0),
+    );
+
+    fineState = LoanFineState(
+      lateDays: fineState.lateDays,
+      lateFine: fineState.lateFine,
+      conditionFine: conditionTotal,
+      totalFine: fineState.lateFine + conditionTotal,
+    );
   }
 
   LoanFineState _calculateLateFine(DateTime endDate) {
@@ -111,55 +121,59 @@ class _LoanReturnSheetState extends State<LoanReturnSheet> {
 
               const SizedBox(height: 14),
               const Text(
-                'Condition',
+                'Condition per item',
                 style: TextStyle(color: AppColors.primary),
               ),
-              const SizedBox(height: 6),
 
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: DropdownButtonFormField<FineDummy>(
-                  value: selectedFine,
-                  items: fineDummies
-                      .map(
-                        (f) => DropdownMenuItem(
-                          value: f,
-                          child: Text(
-                            f.condition,
-                            style: TextStyle(color: AppColors.primary),
+              const SizedBox(height: 8),
+
+              Column(
+                children: widget.loan.items.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
+                        ],
+                      ),
+                      child: DropdownButtonFormField<FineDummy>(
+                        value: itemFines[item.name],
+                        decoration: _boxDeco(),
+                        hint: Text(
+                          item.name,
+                          style: TextStyle(color: AppColors.primary),
                         ),
-                      )
-                      .toList(),
-                  onChanged: isPenalty
-                      ? null
-                      : (v) {
-                          setState(() {
-                            selectedFine = v;
-                            final conditionFineAmount = (v?.fineAmount ?? 0)
-                                .toInt();
-                            fineState = LoanFineState(
-                              lateDays: fineState.lateDays,
-                              lateFine: fineState.lateFine,
-                              conditionFine: conditionFineAmount,
-                              totalFine:
-                                  fineState.lateFine + conditionFineAmount,
-                            );
-                          });
-                        },
-                  decoration: _boxDeco(),
-                ),
+                        items: fineDummies
+                            .map(
+                              (f) => DropdownMenuItem(
+                                value: f,
+                                child: Text(
+                                  f.condition,
+                                  style: TextStyle(color: AppColors.primary),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: widget.loan.status == 'penalty'
+                            ? null
+                            : (v) {
+                                setState(() {
+                                  itemFines[item.name] = v;
+                                  _recalculateFine();
+                                });
+                              },
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
+              const SizedBox(height: 6),
 
               const SizedBox(height: 14),
               const Text(
@@ -192,9 +206,12 @@ class _LoanReturnSheetState extends State<LoanReturnSheet> {
                           final penaltyData = {
                             'status': 'penalty',
                             'penaltyDays': fineState.lateDays,
-                            'conditionNote': selectedFine?.condition,
-                            'fineAmount': selectedFine?.fineAmount ?? 0,
+                            'itemConditions': itemFines.map(
+                              (k, v) => MapEntry(k, v?.condition),
+                            ),
+                            'fineAmount': fineState.conditionFine,
                           };
+
                           Navigator.pop(context, penaltyData);
                         },
                       ),
@@ -215,10 +232,13 @@ class _LoanReturnSheetState extends State<LoanReturnSheet> {
                                 'status': 'returned',
                                 'payAmount': int.tryParse(payCtrl.text) ?? 0,
                                 'penaltyDays': fineState.lateDays,
-                                'conditionNote': selectedFine?.condition,
+                                'itemConditions': itemFines.map(
+                                  (k, v) => MapEntry(k, v?.condition),
+                                ),
                                 'fineAmount': fineState.totalFine,
                                 'isPaid': true,
                               };
+
                               Navigator.pop(context, paymentData);
                             }
                           : null,
@@ -267,11 +287,12 @@ class _LoanReturnSheetState extends State<LoanReturnSheet> {
 
   InputDecoration _boxDeco() => InputDecoration(
     filled: true,
-    fillColor: Colors.transparent,
+    fillColor: AppColors.background,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide.none,
     ),
+
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
   );
 

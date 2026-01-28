@@ -1,0 +1,185 @@
+import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../dummy/activity_log_dummy.dart';
+import '../../widgets/app_drawer.dart';
+import '../../widgets/app_header.dart';
+import '../../services/auth/user_session.dart';
+
+class ActivityLogScreen extends StatefulWidget {
+  const ActivityLogScreen({super.key});
+
+  @override
+  State<ActivityLogScreen> createState() => _ActivityLogScreenState();
+}
+
+class _ActivityLogScreenState extends State<ActivityLogScreen> {
+  bool isOpen = false;
+
+  void toggleDrawer() => setState(() => isOpen = !isOpen);
+
+  @override
+  Widget build(BuildContext context) {
+    if (UserSession.role != 'admin') {
+      return const Scaffold(body: Center(child: Text('Access denied')));
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: AppHeader(
+                    title: 'Activity Log',
+                    onToggle: toggleDrawer,
+                  ),
+                ),
+
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: activityLogDummies.length,
+                    itemBuilder: (context, index) {
+                      final log = activityLogDummies[index];
+                      return _ActivityLogCard(log: log);
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            AppDrawer(
+              isOpen: isOpen,
+              onToggle: toggleDrawer,
+              role: UserSession.role,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityLogCard extends StatelessWidget {
+  final ActivityLogDummy log;
+
+  const _ActivityLogCard({required this.log});
+
+  String _buildActivityText() {
+    String actionText;
+    String entityText = log.entity.name.toLowerCase();
+
+    switch (log.action) {
+      case ActionEnum.create:
+        actionText = 'CREATE';
+        entityText = entityText == 'item' ? 'item' : entityText;
+        return '$actionText $entityText "${log.entityName}" (${log.newValue ?? 'created'})';
+
+      case ActionEnum.borrow:
+        return 'BORROW "${log.entityName}"';
+
+      case ActionEnum.approve:
+        return 'APPROVE loan "${log.entityName}"';
+
+      case ActionEnum.reject:
+        return 'REJECT loan "${log.entityName}"';
+
+      case ActionEnum.edit:
+        return 'EDIT profile "${log.entityName}" (role: ${log.newValue})';
+
+      case ActionEnum.returnLoan:
+        return 'RETURNED "${log.entityName}"';
+
+      case ActionEnum.delete:
+        return 'DELETE ${log.entity.name.toLowerCase()} "${log.entityName}"';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(4, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  log.userName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              _RoleChip(role: log.role),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(_buildActivityText(), style: const TextStyle(fontSize: 13)),
+
+          const SizedBox(height: 6),
+
+          Text(
+            _fmtTime(log.createdAt),
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  final String role;
+
+  const _RoleChip({required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.secondary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        role.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+String _fmtTime(DateTime t) {
+  return '${t.day.toString().padLeft(2, '0')}/'
+      '${t.month.toString().padLeft(2, '0')}/'
+      '${t.year} '
+      '${t.hour.toString().padLeft(2, '0')}:'
+      '${t.minute.toString().padLeft(2, '0')}';
+}

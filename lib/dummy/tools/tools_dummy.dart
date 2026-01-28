@@ -34,7 +34,7 @@ final List<ToolDummy> toolDummies = [
     imagePath: 'assets/test_pen.png',
   ),
   ToolDummy(
-    id: 2,
+    id: 3,
     name: 'Timah Solder',
     category: 'Solder & Perakitan',
     stock: 0,

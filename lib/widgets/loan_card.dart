@@ -84,14 +84,6 @@ class LoanListCard extends StatelessWidget {
                         color: AppColors.secondary,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
-                        'x${item.qty}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.background,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -106,60 +98,56 @@ class LoanListCard extends StatelessWidget {
             const SizedBox(height: 10),
 
             if (actions.isNotEmpty) ...[
-  const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-  Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      const Text(
-        'status',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-
-      const SizedBox(width: 8),
-
-      Text(
-        data.status,
-        style: const TextStyle(fontSize: 12),
-      ),
-
-      const Spacer(), 
-
-      Row(
-        children: actions.map((a) {
-          return Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: SizedBox(
-              height: 28,
-              child: ElevatedButton(
-                onPressed: a.onTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'status',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   ),
-                ),
-                child: Text(
-                  a.label.toLowerCase(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.background,
+
+                  const SizedBox(width: 8),
+
+                  Text(data.status, style: const TextStyle(fontSize: 12)),
+
+                  const Spacer(),
+
+                  Row(
+                    children: actions.map((a) {
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: SizedBox(
+                          height: 28,
+                          child: ElevatedButton(
+                            onPressed: a.onTap,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.secondary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              a.label.toLowerCase(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.background,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                ),
+                ],
               ),
-            ),
-          );
-        }).toList(),
-      ),
-    ],
-  ),
-],
+            ],
           ],
         ],
       ),

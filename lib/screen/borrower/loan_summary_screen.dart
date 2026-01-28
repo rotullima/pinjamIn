@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pinjamln/constants/app_colors.dart';
 import 'package:pinjamln/dummy/tools/tools_dummy.dart';
+import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../widgets/app_header.dart';
 
 class LoanSummaryScreen extends StatefulWidget {
@@ -108,12 +109,8 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppHeader(
-  title: 'Loan Summary',
-  showProfile: false, // transaksi → ga perlu profile
-),
+      appBar: AppHeader(title: 'Loan Summary', showProfile: false),
 
- 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -171,10 +168,19 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
                             ),
                             trailing: IconButton(
                               icon: const Icon(
-                                Icons.delete_outline_rounded,
-                                color: Colors.redAccent,
+                                Icons.delete,
+                                color: AppColors.secondary,
                               ),
-                              onPressed: () => _removeFromCart(index),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => ConfirmDeleteDialog(
+                                    message:
+                                        'Sure to remove this item from loan?',
+                                    onConfirm: () => _removeFromCart(index),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         );

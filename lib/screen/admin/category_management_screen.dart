@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
@@ -11,7 +12,8 @@ class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
 
   @override
-  State<CategoryManagementScreen> createState() => _CategoryManagementScreenState();
+  State<CategoryManagementScreen> createState() =>
+      _CategoryManagementScreenState();
 }
 
 class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
@@ -66,7 +68,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-
                     SearchField(controller: _searchController),
 
                     Padding(
@@ -153,13 +154,23 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                                     onPressed: () => _openForm(category),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    color: AppColors.secondary,
-                                    iconSize: 20,
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: AppColors.secondary,
+                                    ),
                                     onPressed: () {
-                                      setState(() {
-                                        categories.remove(category);
-                                      });
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => ConfirmDeleteDialog(
+                                          message:
+                                              'Sure to remove this category?',
+                                          onConfirm: () {
+                                            setState(() {
+                                              categories.remove(category);
+                                            });
+                                          },
+                                        ),
+                                      );
                                     },
                                   ),
                                 ],
@@ -171,7 +182,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     },
                   ),
                 ),
-                              Positioned(
+                Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,

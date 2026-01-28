@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
@@ -152,13 +153,22 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
                                     onPressed: () => _openForm(fine),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    color: AppColors.secondary,
-                                    iconSize: 20,
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: AppColors.secondary,
+                                    ),
                                     onPressed: () {
-                                      setState(() {
-                                        fines.remove(fine);
-                                      });
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => ConfirmDeleteDialog(
+                                          message: 'Sure to remove this fine?',
+                                          onConfirm: () {
+                                            setState(() {
+                                              fines.remove(fine);
+                                            });
+                                          },
+                                        ),
+                                      );
                                     },
                                   ),
                                 ],

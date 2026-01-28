@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/app_search_field.dart';
+import '../widgets/dashboard/print_report_button.dart';
 import '../widgets/dashboard/stat_card.dart';
 import '../widgets/loan_card.dart';
 import '../dummy/dashboard/dashboard_stats_dummy.dart';
@@ -58,7 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .where(
             (loan) =>
                 loan.borrower.toLowerCase() ==
-                currentBorrowerName.toLowerCase() &&
+                    currentBorrowerName.toLowerCase() &&
                 (loan.status == 'pending' || loan.status == 'approved'),
           )
           .toList();
@@ -71,8 +72,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (loans.length > 5) {
-    loans = loans.sublist(0, 5);
-  }
+      loans = loans.sublist(0, 5);
+    }
 
     return loans;
   }
@@ -120,8 +121,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         const SizedBox(height: 24),
 
-                        SearchField(controller: _searchController),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SearchField(controller: _searchController),
+                            ),
 
+                            if (currentRole == 'officer')
+                              PrintReportButton(onTap: () {}),
+                          ],
+                        ),
                         const SizedBox(height: 16),
 
                         Expanded(

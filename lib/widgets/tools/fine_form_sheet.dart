@@ -53,7 +53,7 @@ class _FineFormSheetState extends State<FineFormSheet> {
             children: [
               Center(
                 child: Text(
-                  isUpdate ? 'Add/Update New Fine' : 'Add/Update New Fine',
+                  isUpdate ? 'Update Fine' : 'Add New Fine',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -68,7 +68,7 @@ class _FineFormSheetState extends State<FineFormSheet> {
                 children: [
                   Expanded(
                     child: _actionButton(
-                      label: 'Kembali',
+                      label: 'Cancel',
                       icon: Icons.refresh,
                       onTap: () => Navigator.pop(context),
                     ),
@@ -76,7 +76,7 @@ class _FineFormSheetState extends State<FineFormSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _actionButton(
-                      label: 'Selesai',
+                      label: 'Done',
                       icon: Icons.check_circle_outline,
                       onTap: () {
                         if (fineAmountCtrl.text.trim().isEmpty) {

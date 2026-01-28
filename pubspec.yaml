@@ -37,6 +37,7 @@ dependencies:
   google_fonts: any
   supabase_flutter: ^2.12.0
   flutter_dotenv: ^6.0.0
+  image_picker: ^1.2.1  
   intl: ^0.20.2
 
 dev_dependencies:

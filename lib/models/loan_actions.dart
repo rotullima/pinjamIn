@@ -6,7 +6,10 @@ enum LoanActionType {
   pickup,
   check,
   pay,
-  returning
+  returning,
+  returned,
+  edit,
+  delete,
 }
 
 class LoanAction {
@@ -14,9 +17,5 @@ class LoanAction {
   final String label;
   final VoidCallback onTap;
 
-  LoanAction({
-    required this.type,
-    required this.label,
-    required this.onTap,
-  });
+  LoanAction({required this.type, required this.label, required this.onTap});
 }

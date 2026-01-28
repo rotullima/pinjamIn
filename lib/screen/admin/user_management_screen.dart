@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
@@ -68,7 +69,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    
                     SearchField(controller: _searchController),
 
                     Padding(
@@ -179,12 +179,22 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                     onPressed: () => _openForm(user),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    color: AppColors.secondary,
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: AppColors.secondary,
+                                    ),
                                     onPressed: () {
-                                      setState(() {
-                                        users.remove(user);
-                                      });
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => ConfirmDeleteDialog(
+                                          message: 'Sure to remove this user?',
+                                          onConfirm: () {
+                                            setState(() {
+                                              users.remove(user);
+                                            });
+                                          },
+                                        ),
+                                      );
                                     },
                                   ),
                                 ],

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pinjamln/screen/admin/activity_log_screen.dart';
+import 'package:pinjamln/screen/admin/loan_list_screen.dart';
 import 'package:pinjamln/screen/borrower/borrowing_screen.dart';
 import 'package:pinjamln/screen/borrower/loan_list_screen.dart';
 import 'package:pinjamln/screen/officer/approved_loan_screen.dart';
@@ -94,34 +96,53 @@ class AppDrawer extends StatelessWidget {
     if (role == 'admin') {
       menuItems.addAll([
         {
-          'icon': Icons.build_outlined, 
-          'label': 'Tools List', 
+          'icon': Icons.build_outlined,
+          'label': 'Tools List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ToolManagementScreen()),
-          );
-          }
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ToolManagementScreen(),
+              ),
+            );
+          },
         },
         {
-          'icon': Icons.person_outline, 
-          'label': 'User', 
+          'icon': Icons.person_outline,
+          'label': 'User',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const UserManagementScreen()),
-          );
-          }
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserManagementScreen(),
+              ),
+            );
+          },
         },
         {
           'icon': Icons.receipt_long_outlined,
           'label': 'Log Activity',
-          'onTap': () {},
+          'onTap': () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ActivityLogScreen(),
+              ),
+            );
+          },
         },
         {
-          'icon': Icons.list_alt, 
-          'label': 'Loan List', 
-          'onTap': () {}},
+          'icon': Icons.list_alt,
+          'label': 'Loan List',
+          'onTap': () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminLoanListScreen(),
+              ),
+            );
+          },
+        },
       ]);
     } else if (role == 'officer') {
       menuItems.addAll([
@@ -130,9 +151,11 @@ class AppDrawer extends StatelessWidget {
           'label': 'Pending Loan List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const PendingLoanScreen()),
-          );
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PendingLoanScreen(),
+              ),
+            );
           },
         },
         {
@@ -140,52 +163,58 @@ class AppDrawer extends StatelessWidget {
           'label': 'Approved Loan List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ApprovedLoanScreen()),
-          );
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ApprovedLoanScreen(),
+              ),
+            );
           },
         },
         {
-          'icon': Icons.south_west, 
-          'label': 'Returning Loan List', 
+          'icon': Icons.south_west,
+          'label': 'Returning Loan List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ReturningLoanScreen()),
-          );
-          }
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReturningLoanScreen(),
+              ),
+            );
+          },
         },
         {
           'icon': Icons.attach_money,
           'label': 'Penalty Loan List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const PenaltyLoanScreen()),
-          );
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PenaltyLoanScreen(),
+              ),
+            );
           },
         },
       ]);
     } else if (role == 'borrower') {
       menuItems.addAll([
         {
-          'icon': Icons.build_outlined, 
-          'label': 'Tool List', 
+          'icon': Icons.build_outlined,
+          'label': 'Tool List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ToolBorrowScreen()),
-          );
-          }
+              context,
+              MaterialPageRoute(builder: (context) => const ToolBorrowScreen()),
+            );
+          },
         },
         {
           'icon': Icons.access_time,
           'label': 'Loan List',
           'onTap': () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoanListScreen()),
-          );
+              context,
+              MaterialPageRoute(builder: (context) => const LoanListScreen()),
+            );
           },
         },
       ]);
