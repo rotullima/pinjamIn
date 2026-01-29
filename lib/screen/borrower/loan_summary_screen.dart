@@ -3,6 +3,7 @@ import 'package:pinjamln/constants/app_colors.dart';
 import 'package:pinjamln/dummy/tools/tools_dummy.dart';
 import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../widgets/app_header.dart';
+import '../../services/auth/user_session.dart';
 
 class LoanSummaryScreen extends StatefulWidget {
   final List<ToolDummy> cart;
@@ -107,6 +108,9 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (UserSession.role != 'borrower') {
+      return const Scaffold(body: Center(child: Text('Access denied')));
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(title: 'Loan Summary', showProfile: false),

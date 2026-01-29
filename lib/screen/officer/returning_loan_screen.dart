@@ -44,6 +44,9 @@ class _ReturningLoanScreenState extends State<ReturningLoanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (UserSession.role != 'officer') {
+      return const Scaffold(body: Center(child: Text('Access denied')));
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

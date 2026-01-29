@@ -105,6 +105,9 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (UserSession.role != 'admin') {
+      return const Scaffold(body: Center(child: Text('Access denied')));
+    }
     final loans = _filteredLoans;
 
     return Scaffold(

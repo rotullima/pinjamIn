@@ -66,7 +66,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
   @override
   Widget build(BuildContext context) {
     if (UserSession.role != 'borrower') {
-      return const Scaffold(body: Center(child: Text('Hanya untuk peminjam')));
+      return const Scaffold(body: Center(child: Text('Acces denied')));
     }
 
     final filtered = tools.where((t) {

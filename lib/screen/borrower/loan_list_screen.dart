@@ -132,6 +132,9 @@ class _LoanListScreenState extends State<LoanListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (UserSession.role != 'borrower') {
+      return const Scaffold(body: Center(child: Text('Access denied')));
+    }
     final filteredLoans = _filteredLoans;
 
     return Scaffold(

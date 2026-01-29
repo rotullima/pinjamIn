@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/user/user_dummy.dart';
+import '../../models/user_model.dart'; // <-- import AppUser
 
 class UserFormSheet extends StatefulWidget {
-  final UserDummy? user;
+  final AppUser? user; // <-- Ganti ke AppUser
 
   const UserFormSheet({super.key, this.user});
 
@@ -13,24 +13,30 @@ class UserFormSheet extends StatefulWidget {
 
 class _UserFormSheetState extends State<UserFormSheet> {
   late TextEditingController nameCtrl;
-  late TextEditingController roleCtrl;
   late TextEditingController emailCtrl;
   late TextEditingController passwordCtrl;
-  String selectedRole = 'admin';
+  String selectedRole = 'officer'; // Default untuk add new (bukan 'admin')
 
   @override
   void initState() {
     super.initState();
     nameCtrl = TextEditingController(text: widget.user?.name ?? '');
-    roleCtrl = TextEditingController(text: widget.user?.role ?? '');
-    emailCtrl = TextEditingController(text: widget.user?.email ?? '');
-    passwordCtrl = TextEditingController(text: widget.user?.password ?? '');
+    emailCtrl = TextEditingController(); // Email tidak diisi kalau edit (karena tidak bisa ubah)
+    passwordCtrl = TextEditingController(); // Password kosong kalau edit (tidak bisa ubah lewat form ini)
 
-    selectedRole = widget.user?.role ?? 'admin';
+    // Pre-fill role kalau edit
+    selectedRole = widget.user?.role ?? 'officer';
+
+    // Kalau edit, email bisa ditampilkan tapi read-only
+    if (widget.user != null) {
+      emailCtrl.text = widget.user!.email;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEdit = widget.user != null;
+
     return Center(
       child: Material(
         color: Colors.transparent,
@@ -54,7 +60,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
             children: [
               Center(
                 child: Text(
-                  widget.user == null ? 'Add New User' : 'Update User',
+                  isEdit ? 'Update User' : 'Add New User',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -65,9 +71,20 @@ class _UserFormSheetState extends State<UserFormSheet> {
               const SizedBox(height: 20),
 
               _input('Name', nameCtrl),
+
               _roleDropdown(),
-              _input('Email', emailCtrl),
-              _input('Password', passwordCtrl),
+
+              // Email: read-only kalau edit
+              _input(
+                'Email',
+                emailCtrl,
+                readOnly: isEdit,
+                hint: isEdit ? 'Email tidak bisa diubah' : null,
+              ),
+
+              // Password: hanya wajib untuk add new, kosong/hidden kalau edit
+              if (!isEdit)
+                _input('Password', passwordCtrl, obscureText: true),
 
               const SizedBox(height: 24),
 
@@ -84,17 +101,35 @@ class _UserFormSheetState extends State<UserFormSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _actionButton(
-                      label: 'Done',
+                      label: isEdit ? 'Update' : 'Done',
                       icon: Icons.check,
                       onTap: () {
+                        // Validasi minimal
+                        if (nameCtrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Nama wajib diisi!')),
+                          );
+                          return;
+                        }
+
+                        // Untuk add new: email & password wajib
+                        if (!isEdit) {
+                          if (emailCtrl.text.trim().isEmpty || passwordCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Email dan password wajib diisi!')),
+                            );
+                            return;
+                          }
+                        }
+
                         Navigator.pop(
                           context,
-                          UserDummy(
-                            name: nameCtrl.text,
-                            role: selectedRole,
-                            email: emailCtrl.text,
-                            password: passwordCtrl.text,
-                          ),
+                          {
+                            'name': nameCtrl.text.trim(),
+                            'role': selectedRole,
+                            'email': emailCtrl.text.trim(),
+                            'password': passwordCtrl.text.trim(),
+                          },
                         );
                       },
                     ),
@@ -108,7 +143,13 @@ class _UserFormSheetState extends State<UserFormSheet> {
     );
   }
 
-  Widget _input(String label, TextEditingController ctrl) {
+  Widget _input(
+    String label,
+    TextEditingController ctrl, {
+    bool readOnly = false,
+    bool obscureText = false,
+    String? hint,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -119,7 +160,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 6),
-
           Container(
             decoration: BoxDecoration(
               color: AppColors.background,
@@ -134,7 +174,10 @@ class _UserFormSheetState extends State<UserFormSheet> {
             ),
             child: TextField(
               controller: ctrl,
+              readOnly: readOnly,
+              obscureText: obscureText,
               decoration: InputDecoration(
+                hintText: hint,
                 filled: true,
                 fillColor: Colors.transparent,
                 contentPadding: const EdgeInsets.symmetric(
@@ -164,7 +207,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 6),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(

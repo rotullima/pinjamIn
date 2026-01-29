@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pinjamln/constants/app_colors.dart';
+import 'package:pinjamln/screen/dashboard_screen.dart';
 import 'package:pinjamln/services/auth/login_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -89,40 +90,29 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    try {
-      final res = await _authService.signIn(
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text.trim(),
-      );
+  try {
+    await _authService.signIn(
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text.trim(),
+    );
 
-      final user = res.user;
+    if (!mounted) return;
 
-      if (user == null) {
-        debugPrint('LOGIN FAILED: user null');
-        return;
-      }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    );
+  } catch (e) {
+    if (!mounted) return;
 
-      final profile = await _authService.getProfile(user.id);
-
-      debugPrint('LOGIN SUCCESS');
-      debugPrint('User ID : ${user.id}');
-      debugPrint('User Role : ${profile['role']}');
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login berhasil sebagai ${profile['role']}')),
-      );
-    } catch (e) {
-      debugPrint('LOGIN ERROR: $e');
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   Widget _buildInputField({
     required IconData icon,

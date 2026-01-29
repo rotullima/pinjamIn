@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/auth/login_service.dart';
+import '../services/auth/user_session.dart';
 import '../screen/auth/loginscreen.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
@@ -16,10 +17,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onProfileTap,
     this.showProfile = true,
   });
-
-
-  static const String _userName = "Siti Umrotul";
-  static const String _userRole = "Admin";
 
   void _showProfileMenu(BuildContext context) {
     showMenu(
@@ -38,7 +35,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _userName,
+                UserSession.name,
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -47,8 +44,11 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                _userRole,
-                style: TextStyle(color: AppColors.secondary, fontSize: 13),
+                UserSession.role,
+                style: const TextStyle(
+                  color: AppColors.secondary,
+                  fontSize: 13,
+                ),
               ),
               const Divider(height: 16),
             ],
@@ -61,11 +61,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             await Future.delayed(const Duration(milliseconds: 120));
             final authService = AuthService();
             await authService.signOut();
+
             if (!context.mounted) return;
 
-            Navigator.pushReplacement(
+            Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
             );
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -77,7 +79,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           },
           child: const ListTile(
             leading: Icon(Icons.logout, color: Colors.redAccent),
-            title: Text('Logout', style: TextStyle(color: Colors.redAccent)),
+            title: Text(
+              'Logout',
+              style: TextStyle(color: Colors.redAccent),
+            ),
             dense: true,
             visualDensity: VisualDensity.compact,
           ),
@@ -92,62 +97,63 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-  height: 72, // lebih lega dari kToolbarHeight
-  padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           if (onToggle != null)
-  GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: onToggle,
-    child: const Icon(
-      Icons.chevron_right,
-      size: 28,
-      color: AppColors.secondary,
-    ),
-  )
-else
-  const SizedBox(width: 4),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onToggle,
+              child: const Icon(
+                Icons.chevron_right,
+                size: 28,
+                color: AppColors.secondary,
+              ),
+            )
+          else
+            const SizedBox(width: 4),
 
           Expanded(
-  child: Padding(
-    padding: const EdgeInsets.only(left: 12),
-    child: Text(
-      title,
-      style: const TextStyle(
-        color: AppColors.primary,
-        fontWeight: FontWeight.bold,
-        fontSize: 20,
-      ),
-    ),
-  ),
-),
-
+            child: Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ),
 
           if (showProfile)
-  GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: onProfileTap ?? () => _showProfileMenu(context),
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.secondary, width: 2),
-      ),
-      child: const Icon(
-        Icons.person_outline_rounded,
-        color: AppColors.secondary,
-        size: 24,
-      ),
-    ),
-  ),
-
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onProfileTap ?? () => _showProfileMenu(context),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.secondary,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.person_outline_rounded,
+                  color: AppColors.secondary,
+                  size: 24,
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-@override
-Size get preferredSize => const Size.fromHeight(72);
+  @override
+  Size get preferredSize => const Size.fromHeight(72);
 }
