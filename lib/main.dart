@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:pinjamln/screen/auth/loginscreen.dart';
+import 'package:pinjamln/screen/auth/splashscreen.dart';
 import 'config/supabase_config.dart';
 
 void main() async {
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
         scaffoldBackgroundColor: const Color(0xFFF7FAFC),
       ),
-      home: LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }

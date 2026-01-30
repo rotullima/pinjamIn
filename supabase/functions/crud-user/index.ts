@@ -53,14 +53,31 @@ serve(async (req) => {
       const body = await req.json();
       const { id, email, password, role, name, is_active } = body;
 
-      const { data, error } = await supabase.auth.admin.updateUserById(id, {
-        email,
-        password,
+      // Update user metadata first
+      const { data: metaUpdate, error: metaError } = await supabase.auth.admin.updateUserById(id, {
         user_metadata: { role, name, is_active },
       });
-      if (error) throw error;
+      if (metaError) throw metaError;
 
-      return new Response(JSON.stringify({ user: data.user }), {
+      // Update email separately without triggering email confirmation
+      let finalData = metaUpdate;
+      if (email) {
+        const { data: emailUpdate, error: emailError } = await supabase.auth.admin.updateUserById(id, {
+          email: email,
+        });
+        if (emailError) throw emailError;
+        finalData = emailUpdate;
+      }
+
+      // Update password if provided
+      if (password) {
+        const { error: pwdError } = await supabase.auth.admin.updateUserById(id, {
+          password: password,
+        });
+        if (pwdError) throw pwdError;
+      }
+
+      return new Response(JSON.stringify({ user: finalData.user }), {
         headers: { "Content-Type": "application/json" },
       });
     }

@@ -21,7 +21,6 @@ class UserService {
         'Authorization': 'Bearer $apiKey', // JWT user login
       },
     );
-
     if (res.statusCode != 200) {
       throw Exception('Failed to fetch users: ${res.body}');
     }
@@ -40,15 +39,12 @@ class UserService {
     required String name,
     required String role,
   }) async {
-    final token = Supabase.instance.client.auth.currentSession?.accessToken;
-    if (token == null) throw Exception('User not logged in');
-
     final res = await http.post(
       Uri.parse(baseUrl),
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Authorization': 'Bearer $token', // JWT user login
+        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
       },
       body: jsonEncode({
         'email': email,
@@ -66,17 +62,67 @@ class UserService {
     return UserModel.fromJson(userData);
   }
 
+  /// PUT update user
+  Future<UserModel> updateUser({
+    required String id,
+    String? name,
+    String? role,
+    String? email,
+  }) async {
+    final res = await http.put(
+      Uri.parse(baseUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
+      },
+      body: jsonEncode({
+        'id': id,
+        if (name != null) 'name': name,
+        if (role != null) 'role': role,
+        if (email != null) 'email': email,
+      }),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to update user: ${res.body}');
+    }
+
+    final userData = jsonDecode(res.body)['user'] as Map<String, dynamic>;
+    return UserModel.fromJson(userData);
+  }
+
+  /// Activate user (set is_active = true)
+  Future<UserModel> activateUser(String id) async {
+    final res = await http.put(
+      Uri.parse(baseUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKey,
+        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
+      },
+      body: jsonEncode({
+        'id': id,
+        'is_active': true,
+      }),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to activate user: ${res.body}');
+    }
+
+    final userData = jsonDecode(res.body)['user'] as Map<String, dynamic>;
+    return UserModel.fromJson(userData);
+  }
+
   /// DELETE (soft) user
   Future<void> deleteUser(String id) async {
-    final token = Supabase.instance.client.auth.currentSession?.accessToken;
-    if (token == null) throw Exception('User not logged in');
-
     final res = await http.delete(
       Uri.parse(baseUrl),
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
       },
       body: jsonEncode({'id': id}),
     );
