@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/tools/category_dummy.dart';
+import '../../models/category_model.dart';
 
 class CategoryFormSheet extends StatefulWidget {
-  final CategoryDummy? category;
+  final CategoryModel? category;
 
   const CategoryFormSheet({super.key, this.category});
 
@@ -45,8 +45,8 @@ class _CategoryFormSheetState extends State<CategoryFormSheet> {
               Center(
                 child: Text(
                   widget.category == null
-                      ? 'Add New Tools'
-                      : 'Update Tools',
+                      ? 'Add New Category'
+                      : 'Update Category',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -61,7 +61,7 @@ class _CategoryFormSheetState extends State<CategoryFormSheet> {
                   Expanded(
                     child: _actionButton(
                       label: 'Cancel',
-                      icon: Icons.refresh,
+                      icon: Icons.close,
                       onTap: () => Navigator.pop(context),
                     ),
                   ),
@@ -69,18 +69,12 @@ class _CategoryFormSheetState extends State<CategoryFormSheet> {
                   Expanded(
                     child: _actionButton(
                       label: 'Done',
-                      icon: Icons.check_circle_outline,
+                      icon: Icons.check,
                       onTap: () {
-                        if (nameCtrl.text.trim().isEmpty) {
-                          return;
-                        }
-                        Navigator.pop(
-                          context,
-                          CategoryDummy(
-                            name: nameCtrl.text.trim(),
-                            toolCount: widget.category?.toolCount ?? 0,
-                          ),
-                        );
+                        final name = nameCtrl.text.trim();
+                        if (name.isEmpty) return;
+
+                        Navigator.pop(context, name);
                       },
                     ),
                   ),
@@ -93,50 +87,31 @@ class _CategoryFormSheetState extends State<CategoryFormSheet> {
     );
   }
 
-  Widget _input(
-    String label,
-    TextEditingController ctrl,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 6),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.background,
+  Widget _input(String label, TextEditingController ctrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: ctrl,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.background,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: ctrl,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.transparent,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              borderSide: BorderSide.none,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -159,8 +134,6 @@ class _CategoryFormSheetState extends State<CategoryFormSheet> {
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.secondary,
-          elevation: 12,
-          shadowColor: Colors.black.withOpacity(0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

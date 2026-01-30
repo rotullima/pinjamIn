@@ -3,10 +3,12 @@ import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
-import '../../dummy/tools/category_dummy.dart';
 import '../../widgets/tools/category_form_sheet.dart';
 import '../../services/auth/user_session.dart';
 import '../../widgets/app_search_field.dart';
+import '../../services/category_service.dart';
+import '../../models/category_model.dart';
+import '../../widgets/app_toast.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -20,17 +22,24 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   bool isOpen = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  late List<CategoryDummy> categories;
+  late List<CategoryModel> categories = [];
+  final CategoryService _service = CategoryService();
 
   @override
   void initState() {
     super.initState();
-    categories = List.from(categoryDummies);
+    _loadCategories();
+
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase().trim();
       });
     });
+  }
+
+  Future<void> _loadCategories() async {
+    categories = await _service.fetchCategories();
+    setState(() {});
   }
 
   @override
@@ -164,10 +173,30 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                                         builder: (_) => ConfirmDeleteDialog(
                                           message:
                                               'Sure to remove this category?',
-                                          onConfirm: () {
+                                          onConfirm: () async {
+                                            if (category.toolCount > 0) {
+                                              showToast(
+                                                context,
+                                                'Category is still used by items',
+                                                isError: true,
+                                              );
+                                              return;
+                                            }
+
+                                            await _service.softDeleteCategory(
+                                              category.id,
+                                            );
+
                                             setState(() {
-                                              categories.remove(category);
+                                              categories.removeWhere(
+                                                (e) => e.id == category.id,
+                                              );
                                             });
+
+                                            showToast(
+                                              context,
+                                              'Category deleted successfully',
+                                            );
                                           },
                                         ),
                                       );
@@ -182,60 +211,60 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     },
                   ),
                 ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    margin: const EdgeInsets.only(
-                      left: 20,
-                      right: 20,
-                      bottom: 20,
-                      top: 10,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          offset: const Offset(4, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.background,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 10,
-                            ),
-                          ),
-                          label: const Text(
-                            "Back",
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                margin: const EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  bottom: 20,
+                  top: 10,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(4, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.background,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 10,
+                        ),
+                      ),
+                      label: const Text(
+                        "Back",
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             AppDrawer(
               isOpen: isOpen,
@@ -248,8 +277,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     );
   }
 
-  Future<void> _openForm(CategoryDummy? category) async {
-    final result = await showModalBottomSheet<CategoryDummy>(
+  Future<void> _openForm(CategoryModel? category) async {
+    final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -258,13 +287,22 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
     if (result == null) return;
 
-    setState(() {
-      if (category == null) {
-        categories.add(result);
-      } else {
-        final index = categories.indexOf(category);
-        categories[index] = result;
-      }
-    });
+    if (category == null) {
+      final newCat = await _service.createCategory(result);
+      setState(() {
+        categories.add(newCat);
+      });
+    } else {
+      final updated = await _service.updateCategory(
+        categoryId: category.id,
+        name: result,
+      );
+
+      final index = categories.indexWhere((e) => e.id == category.id);
+
+      setState(() {
+        categories[index] = updated;
+      });
+    }
   }
 }
