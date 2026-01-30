@@ -7,8 +7,9 @@ import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/confirm_delete_dialog.dart';
 import '../../services/auth/user_session.dart';
-import '../../dummy/tools/tools_dummy.dart';
 import '../../widgets/tools/tool_form_sheet.dart';
+import '../../services/tools/tool_service.dart';
+import '../../models/tools/tool_model.dart';
 
 class ToolManagementScreen extends StatefulWidget {
   const ToolManagementScreen({super.key});
@@ -20,18 +21,34 @@ class ToolManagementScreen extends StatefulWidget {
 class _ToolManagementScreenState extends State<ToolManagementScreen> {
   bool isOpen = false;
   final TextEditingController _searchCtrl = TextEditingController();
-  late List<ToolDummy> tools;
+
+  final ToolService _toolService = ToolService();
+
+  List<ToolModel> tools = [];
   String query = '';
 
   @override
   void initState() {
     super.initState();
-    tools = List.from(toolDummies);
+    _loadTools();
+
     _searchCtrl.addListener(() {
       setState(() {
         query = _searchCtrl.text.toLowerCase().trim();
       });
     });
+  }
+
+  Future<void> _loadTools() async {
+    final data = await _toolService.fetchTools();
+    setState(() => tools = data);
+  }
+
+  List<ToolModel> get filtered {
+    return tools.where((t) {
+      return t.name.toLowerCase().contains(query) ||
+          t.category.toLowerCase().contains(query);
+    }).toList();
   }
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
@@ -41,11 +58,6 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
     if (UserSession.role != 'admin') {
       return const Scaffold(body: Center(child: Text('Access denied')));
     }
-
-    final filtered = tools.where((t) {
-      return t.name.toLowerCase().contains(query) ||
-          t.category.toLowerCase().contains(query);
-    }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -213,7 +225,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
     );
   }
 
-  Widget _toolCard(ToolDummy tool) {
+  Widget _toolCard(ToolModel tool) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -237,7 +249,10 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
-                  image: AssetImage(tool.imagePath),
+                  image: tool.imagePath != null
+                      ? NetworkImage(tool.imagePath!)
+                      : const AssetImage('assets/images/placeholder.png')
+                            as ImageProvider,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -260,7 +275,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
                   Text(tool.category, style: const TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
                   Text(
-                    'Available: ${tool.stock}',
+                    'Available: ${tool.stockAvailable}',
                     style: const TextStyle(fontSize: 12),
                   ),
                 ],
@@ -281,8 +296,9 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
                       context: context,
                       builder: (_) => ConfirmDeleteDialog(
                         message: 'Sure to remove this tool?',
-                        onConfirm: () {
-                          setState(() => tools.remove(tool));
+                        onConfirm: () async {
+                          await _toolService.softDeleteTool(tool.id);
+                          await _loadTools();
                         },
                       ),
                     );
@@ -296,8 +312,8 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
     );
   }
 
-  Future<void> _openForm(ToolDummy? tool) async {
-    final result = await showModalBottomSheet<ToolDummy>(
+  Future<void> _openForm(ToolModel? tool) async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -306,13 +322,8 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
 
     if (result == null) return;
 
-    setState(() {
-      if (tool == null) {
-        tools.add(result);
-      } else {
-        final i = tools.indexOf(tool);
-        tools[i] = result;
-      }
-    });
+    if (result == true) {
+      await _loadTools();
+    }
   }
 }

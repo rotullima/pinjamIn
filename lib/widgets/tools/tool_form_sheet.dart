@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:pinjamln/models/tools/tool_model.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/tools/tools_dummy.dart';
 import '../../dummy/tools/category_dummy.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ToolFormSheet extends StatefulWidget {
-  final ToolDummy? tool;
+  final ToolModel? tool;
 
   const ToolFormSheet({super.key, this.tool});
 
@@ -44,10 +44,12 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
     super.initState();
     nameCtrl = TextEditingController(text: widget.tool?.name ?? '');
     stockCtrl = TextEditingController(
-      text: widget.tool?.stock.toString() ?? '',
-    );
+  text: widget.tool?.stockAvailable.toString() ?? '',
+);
+
     selectedCategory = widget.tool?.category ?? categoryNames.first;
-    selectedCondition = widget.tool?.condition ?? 'good';
+    selectedCondition = widget.tool?.statusItem ?? 'good';
+
   }
 
   @override
@@ -126,11 +128,12 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
               ),
               _input('Stock', stockCtrl, number: true),
               _dropdown(
-                'Condition',
-                selectedCondition,
-                ['good', 'in repair'],
-                (v) => setState(() => selectedCondition = v),
-              ),
+  'Condition',
+  selectedCondition,
+  ['good', 'in_repair'],
+  (v) => setState(() => selectedCondition = v),
+),
+
 
               const SizedBox(height: 24),
 
@@ -141,7 +144,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                       label: 'Back',
                       icon: Icons.close,
                       outlined: true,
-                      onTap: () => Navigator.pop(context),
+                      onTap: () => Navigator.pop(context, false),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -151,15 +154,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                       icon: Icons.check,
                       onTap: () {
                         Navigator.pop(
-                          context,
-                          ToolDummy(
-                            id: 4,
-                            name: nameCtrl.text,
-                            category: selectedCategory,
-                            stock: int.tryParse(stockCtrl.text) ?? 0,
-                            condition: selectedCondition,
-                            imagePath: 'picked_image',
-                          ),
+                          context, true
                         );
                       },
                     ),
