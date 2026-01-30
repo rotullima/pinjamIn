@@ -4,9 +4,10 @@ import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
-import '../../dummy/tools/fine_dummy.dart';
 import '../../widgets/tools/fine_form_sheet.dart';
 import '../../services/auth/user_session.dart';
+import '../../services/fine_service.dart';
+import '../../models/fine_model.dart';
 
 class FineManagementScreen extends StatefulWidget {
   const FineManagementScreen({super.key});
@@ -19,17 +20,23 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
   bool isOpen = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  late List<FineDummy> fines;
+  final FineService _service = FineService();
+  late List<FineModel> fines = [];
 
   @override
   void initState() {
     super.initState();
-    fines = List.from(fineDummies);
+    _loadFines();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase().trim();
       });
     });
+  }
+
+  Future<void> _loadFines() async {
+    fines = await _service.fetchFines();
+    setState(() {});
   }
 
   @override
@@ -134,7 +141,7 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'Fine amount: ${fine.fineAmount.toStringAsFixed(3)}',
+                                      'Fine amount: ${fine.fineAmount.toInt()}',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         color: AppColors.primary,
@@ -162,10 +169,13 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
                                         context: context,
                                         builder: (_) => ConfirmDeleteDialog(
                                           message: 'Sure to remove this fine?',
-                                          onConfirm: () {
-                                            setState(() {
-                                              fines.remove(fine);
-                                            });
+                                          onConfirm: () async {
+                                            await _service.deleteFine(fine.id);
+                                            setState(
+                                              () => fines.removeWhere(
+                                                (f) => f.id == fine.id,
+                                              ),
+                                            );
                                           },
                                         ),
                                       );
@@ -246,23 +256,28 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
     );
   }
 
-  Future<void> _openForm(FineDummy? fine) async {
-    final result = await showModalBottomSheet<FineDummy>(
+  Future<void> _openForm(FineModel? fine) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (_) => FineFormSheet(fine: fine),
     );
 
     if (result == null) return;
 
-    setState(() {
-      if (fine == null) {
-        fines.add(result);
-      } else {
-        final index = fines.indexOf(fine);
-        fines[index] = result;
-      }
-    });
+    if (fine == null) {
+      final newFine = await _service.createFine(
+        result['condition'],
+        result['fineAmount'],
+      );
+      setState(() => fines.add(newFine));
+    } else {
+      final updated = await _service.updateFine(
+        fineId: fine.id,
+        condition: result['condition'],
+        fineAmount: result['fineAmount'],
+      );
+      final index = fines.indexWhere((f) => f.id == fine.id);
+      setState(() => fines[index] = updated);
+    }
   }
 }

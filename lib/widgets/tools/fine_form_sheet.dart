@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/tools/fine_dummy.dart';
+import '../../models/fine_model.dart';
 
 class FineFormSheet extends StatefulWidget {
-  final FineDummy? fine;
+  final FineModel? fine;
 
   const FineFormSheet({super.key, this.fine});
 
@@ -18,11 +18,9 @@ class _FineFormSheetState extends State<FineFormSheet> {
   @override
   void initState() {
     super.initState();
-    conditionCtrl = TextEditingController(
-      text: widget.fine?.condition ?? '',
-    );
+    conditionCtrl = TextEditingController(text: widget.fine?.condition ?? '');
     fineAmountCtrl = TextEditingController(
-      text: widget.fine?.fineAmount.toStringAsFixed(3) ?? '',
+      text: widget.fine?.fineAmount.toInt().toString() ?? '',
     );
   }
 
@@ -62,7 +60,7 @@ class _FineFormSheetState extends State<FineFormSheet> {
               ),
               const SizedBox(height: 20),
               if (!isUpdate) _input('Condition:', conditionCtrl),
-              _input('Fine amount:', fineAmountCtrl, number: true),
+              _input('Fine amount:', fineAmountCtrl),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -82,24 +80,20 @@ class _FineFormSheetState extends State<FineFormSheet> {
                         if (fineAmountCtrl.text.trim().isEmpty) {
                           return;
                         }
-                        
-                        final condition = isUpdate 
-                            ? widget.fine!.condition 
+
+                        final condition = isUpdate
+                            ? widget.fine!.condition
                             : conditionCtrl.text.trim();
-                            
+
                         if (!isUpdate && condition.isEmpty) {
                           return;
                         }
-                        
-                        Navigator.pop(
-                          context,
-                          FineDummy(
-                            condition: condition,
-                            fineAmount: double.tryParse(
-                                    fineAmountCtrl.text.trim()) ??
-                                0,
-                          ),
-                        );
+
+                        Navigator.pop(context, {
+                          'condition': condition,
+                          'fineAmount':
+                              double.tryParse(fineAmountCtrl.text.trim()) ?? 0,
+                        });
                       },
                     ),
                   ),
