@@ -1,22 +1,31 @@
-class AppUser {
-  final String id;     
-  final String name;
-  final String role;
-  final String email;   
+class UserModel {
+  final String id;
+  final String email;
+  final String? name;
+  final String? role;
+  final bool isActive;
 
-  AppUser({
+  UserModel({
     required this.id,
-    required this.name,
-    required this.role,
     required this.email,
+    this.name,
+    this.role,
+    required this.isActive,
   });
 
-  factory AppUser.fromJson(Map<String, dynamic> json) {
-    return AppUser(
-      id: json['profile_id'] as String,
-      name: json['name'] as String,
-      role: json['role'] as String,
-      email: json['email'] ?? 'tidak tersedia', 
-    );
-  }
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+        id: json['id'],
+        email: json['email'],
+        name: json['name'],
+        role: json['role'],
+        isActive: json['is_active'] ?? true,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'name': name,
+        'role': role,
+        'is_active': isActive,
+      };
 }

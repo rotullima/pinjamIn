@@ -8,7 +8,6 @@ import '../../models/user_model.dart'; // <-- pastikan import ini
 import '../../widgets/user/user_form_sheet.dart';
 import '../../services/auth/user_session.dart';
 import '../../services/auth/user_service.dart'; // <-- service create user
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -21,20 +20,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   bool isOpen = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  late List<AppUser> users;
+  late List<UserModel> users;
   bool _isLoading = true; // untuk loading state
 
+  // Service
+  late UserService _userService;
+
   @override
-  void initState() {
-    super.initState();
-    users = [];
-    _fetchUsers();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase().trim();
-      });
+void initState() {
+  super.initState();
+
+  users = [];
+  _userService = UserService(); // langsung pakai default baseUrl & apiKey dari env
+
+  _fetchUsers();
+
+  _searchController.addListener(() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase().trim();
     });
-  }
+  });
+}
 
   @override
   void dispose() {
@@ -43,30 +49,26 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _fetchUsers() async {
-    setState(() => _isLoading = true);
-    try {
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('profile_id, name, role')
-          .order('created_at', ascending: false);
-
-      setState(() {
-        users = response.map((data) => AppUser.fromJson(data)).toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetch users: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat daftar user: $e')),
-        );
-      }
-      setState(() {
-        users = [];
-        _isLoading = false;
-      });
+  setState(() => _isLoading = true);
+  try {
+    final fetchedUsers = await _userService.fetchUsers();
+    setState(() {
+      users = fetchedUsers;
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error fetch users: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat daftar user: $e')),
+      );
     }
+    setState(() {
+      users = [];
+      _isLoading = false;
+    });
   }
+}
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
@@ -77,8 +79,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     }
 
     final filteredUsers = users.where((user) {
-      return user.name.toLowerCase().contains(_searchQuery) ||
-          user.role.toLowerCase().contains(_searchQuery);
+      final name = user.name ?? '';
+      final role = user.role ?? '';
+      return name.toLowerCase().contains(_searchQuery) ||
+          role.toLowerCase().contains(_searchQuery);
     }).toList();
 
     return Scaffold(
@@ -130,95 +134,98 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : filteredUsers.isEmpty
-                          ? const Center(child: Text('Belum ada user'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: filteredUsers.length,
-                              itemBuilder: (context, index) {
-                                final user = filteredUsers[index];
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.background,
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
-                                        blurRadius: 10,
-                                        offset: Offset(4, 4),
-                                      ),
-                                    ],
+                      ? const Center(child: Text('Belum ada user'))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: filteredUsers.length,
+                          itemBuilder: (context, index) {
+                            final user = filteredUsers[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 10,
+                                    offset: Offset(4, 4),
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                      horizontal: 16,
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                user.name,
-                                                style: const TextStyle(
-                                                  color: AppColors.primary,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'As ${user.role}',
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: AppColors.primary,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              // Email opsional kalau kamu fetch terpisah
-                                              // Text('email: ${user.email ?? 'tidak tersedia'}', style: ...),
-                                            ],
-                                          ),
-                                        ),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.edit),
-                                              color: AppColors.secondary,
-                                              onPressed: () => _openForm(user),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            user.name ?? '',
+                                            style: const TextStyle(
+                                              color: AppColors.primary,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.delete,
-                                                color: AppColors.secondary,
-                                              ),
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (_) => ConfirmDeleteDialog(
-                                                    message: 'Yakin hapus user ini?',
-                                                    onConfirm: () {
-                                                      setState(() {
-                                                        users.remove(user);
-                                                      });
-                                                      // TODO: nanti tambah delete real via Supabase
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'As ${user.role}',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          // Email opsional kalau kamu fetch terpisah
+                                          // Text('email: ${user.email ?? 'tidak tersedia'}', style: ...),
+                                        ],
+                                      ),
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          color: AppColors.secondary,
+                                          onPressed: () => _openForm(user),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: AppColors.secondary,
+                                          ),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (_) =>
+                                                  ConfirmDeleteDialog(
+                                                    message:
+                                                        'Yakin hapus user ini?',
+                                                    onConfirm: () async {
+                                                      Navigator.pop(
+                                                        context,
+                                                      ); // tutup dialog dulu
+                                                      await _deleteUser(user);
                                                     },
                                                   ),
-                                                );
-                                              },
-                                            ),
-                                          ],
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -234,7 +241,26 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  Future<void> _openForm(AppUser? user) async {
+  Future<void> _deleteUser(UserModel user) async {
+    try {
+      await _userService.deleteUser(user.id);
+      setState(() {
+        users.removeWhere((u) => u.id == user.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User ${user.name} berhasil dinonaktifkan')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal hapus user: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openForm(UserModel? user) async {
     if (user != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Edit user belum diimplementasikan')),
@@ -242,7 +268,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       return;
     }
 
-    // Hanya untuk add new
+    // Add new user
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -253,19 +279,29 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     if (result == null) return;
 
     try {
-      final service = UserRegistrationService();
-      final userId = await service.createNewUser(
+      final newUser = await _userService.createUser(
         email: result['email'] as String,
         password: result['password'] as String,
         name: result['name'] as String,
         role: result['role'] as String,
       );
 
-      // Refresh list dari Supabase
-      await _fetchUsers();
+      // Tambahkan ke list langsung atau refresh
+      setState(
+        () => users.insert(
+          0,
+          UserModel(
+            id: newUser.id,
+            name: newUser.name ?? '',
+            role: newUser.role ?? 'borrower',
+            email: newUser.email,
+            isActive: newUser.isActive,
+          ),
+        ),
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User berhasil dibuat! ID: $userId')),
+        SnackBar(content: Text('User berhasil dibuat! ID: ${newUser.id}')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

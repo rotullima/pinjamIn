@@ -3,7 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../models/user_model.dart'; // <-- import AppUser
 
 class UserFormSheet extends StatefulWidget {
-  final AppUser? user; // <-- Ganti ke AppUser
+  final UserModel? user; // <-- Ganti ke AppUser
 
   const UserFormSheet({super.key, this.user});
 
