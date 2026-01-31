@@ -8,9 +8,10 @@ import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
 import '../../widgets/confirm_snackbar.dart';
-import '../../dummy/loan_dummy.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
+import '../../services/admin_loan_action_service.dart';
+import '../../models/loan_model.dart';
 
 class AdminLoanListScreen extends StatefulWidget {
   const AdminLoanListScreen({super.key});
@@ -24,36 +25,45 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
   String _selectedStatus = 'pending';
+  final _service = LoanService();
+List<LoanModel> _loans = [];
 
   @override
-  void initState() {
-    super.initState();
-    _searchCtrl.addListener(() {
-      setState(() {
-        _query = _searchCtrl.text.toLowerCase().trim();
-      });
-    });
-  }
+void initState() {
+  super.initState();
+  _loadLoans();
+
+  _searchCtrl.addListener(() {
+    _query = _searchCtrl.text.toLowerCase().trim();
+    _loadLoans();
+  });
+}
+
+
+  Future<void> _loadLoans() async {
+  setState(() => _loading = true);
+
+  _loans = await _service.fetchLoans(
+    status: _selectedStatus,
+    search: _query,
+  );
+
+  setState(() => _loading = false);
+}
+
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
-  List<LoanDummy> get _filteredLoans {
-    return loanDummies.where((loan) {
-      final matchSearch =
-          _query.isEmpty || loan.borrower.toLowerCase().contains(_query);
-
-      final matchStatus = loan.status.toLowerCase() == _selectedStatus;
-
-      return matchSearch && matchStatus;
-    }).toList();
-  }
 
   Widget _buildFilterButton() {
+final loans = _loans;
+
     return PopupMenuButton<String>(
       initialValue: _selectedStatus,
       onSelected: (value) {
-        setState(() => _selectedStatus = value);
-      },
+  setState(() => _selectedStatus = value);
+  _loadLoans();
+},
       offset: const Offset(0, 44),
       elevation: 6,
       color: AppColors.primary,
@@ -108,7 +118,6 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
     if (UserSession.role != 'admin') {
       return const Scaffold(body: Center(child: Text('Access denied')));
     }
-    final loans = _filteredLoans;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -174,6 +183,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
 
                             final actions = _buildAdminActions(context, loan);
 
+
                             return LoanListCard(data: loan, actions: actions);
                           },
                         ),
@@ -192,82 +202,83 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
     );
   }
 
-  List<LoanAction> _buildAdminActions(BuildContext context, LoanDummy loan) {
+  List<LoanAction> _buildAdminActions(
+  BuildContext context,
+  LoanModel loan,
+)
+ {
     switch (loan.status) {
       case 'pending':
-        return [
-          LoanAction(
-            type: LoanActionType.edit,
-            label: 'Edit',
-            onTap: () async {
-              final result = await showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) {
-                  return EditPendingLoanSheet(loan: loan);
-                },
-              );
+  return [
+    LoanAction(
+      type: LoanActionType.edit,
+      label: 'Edit',
+      onTap: () async {
+        final result = await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => EditPendingLoanSheet(loan: loan),
+        );
 
-              if (result == null) return;
+        if (result != null) _loadLoans();
+      },
+    ),
 
-              setState(() => loanDummies.remove(loan));
-            },
-          ),
-          LoanAction(
-            type: LoanActionType.delete,
-            label: 'Delete',
-            onTap: () {
-              setState(() => loanDummies.remove(loan));
-              showConfirmSnackBar(context, 'loan deleted');
-            },
-          ),
-        ];
+    LoanAction(
+      type: LoanActionType.delete,
+      label: 'Delete',
+      onTap: () async {
+        await _service.deleteLoan(loan.loanId);
+        showConfirmSnackBar(context, 'Loan deleted');
+        _loadLoans();
+      },
+    ),
+  ];
 
       case 'borrowed':
-        return [
-          LoanAction(
-            type: LoanActionType.edit,
-            label: 'Extend',
-            onTap: () async {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) {
-                  return ExtendBorrowedLoanSheet(loan: loan);
-                },
-              );
-            },
-          ),
-          LoanAction(
-            type: LoanActionType.returning,
-            label: 'Returning',
-            onTap: () {
-              showConfirmSnackBar(context, 'return by admin');
-              setState(() {
-                loanDummies.remove(loan);
-              });
-            },
-          ),
+  return [
+    LoanAction(
+      type: LoanActionType.edit,
+      label: 'Extend',
+      onTap: () async {
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => ExtendBorrowedLoanSheet(loan: loan),
+        );
+        _loadLoans();
+      },
+    ),
+
+    LoanAction(
+      type: LoanActionType.returning,
+      label: 'Returning',
+      onTap: () async {
+        await _service.updateStatus(loan.loanId, 'returning');
+        showConfirmSnackBar(context, 'Marked as returning');
+        _loadLoans();
+      },
+    ),
         ];
 
       case 'penalty':
-        return [
-          LoanAction(
-            type: LoanActionType.returned,
-            label: 'Returned',
-            onTap: () {
-              showConfirmSnackBar(
-                context,
-                'penalty resolved, force return by admin',
-              );
-              setState(() {
-                loanDummies.remove(loan);
-              });
-            },
-          ),
-        ];
+  return [
+    LoanAction(
+      type: LoanActionType.returned,
+      label: 'Returned',
+      onTap: () async {
+        await _service.updateStatus(loan.loanId, 'returned');
+        showConfirmSnackBar(
+          context,
+          'Penalty resolved, loan returned',
+        );
+        _loadLoans();
+      },
+    ),
+  ];
+
 
       default:
         return [];
