@@ -2,8 +2,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pinjamln/models/tools/tool_model.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/tools/category_dummy.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../models/category_model.dart';
+import '../../services/category_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/tools/tool_service.dart';
 
 class ToolFormSheet extends StatefulWidget {
   final ToolModel? tool;
@@ -14,42 +17,49 @@ class ToolFormSheet extends StatefulWidget {
   State<ToolFormSheet> createState() => _ToolFormSheetState();
 }
 
-final List<String> categoryNames = categoryDummies.map((c) => c.name).toList();
-
 class _ToolFormSheetState extends State<ToolFormSheet> {
   late TextEditingController nameCtrl;
   late TextEditingController stockCtrl;
-  String selectedCategory = categoryNames.first;
   String selectedCondition = 'good';
   Uint8List? pickedImageBytes;
+  CategoryModel? selectedCategory;
+  List<CategoryModel> categories = [];
 
   Future<void> _pickImage() async {
-  final picker = ImagePicker();
-  final XFile? image = await picker.pickImage(
-    source: ImageSource.gallery,
-  );
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-  if (image == null) return;
+    if (image == null) return;
 
-  final bytes = await image.readAsBytes();
+    final bytes = await image.readAsBytes();
 
-  setState(() {
-    pickedImageBytes = bytes;
-  });
-}
-
+    setState(() {
+      pickedImageBytes = bytes;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     nameCtrl = TextEditingController(text: widget.tool?.name ?? '');
     stockCtrl = TextEditingController(
-  text: widget.tool?.stockAvailable.toString() ?? '',
-);
-
-    selectedCategory = widget.tool?.category ?? categoryNames.first;
+      text: widget.tool?.stockAvailable.toString() ?? '',
+    );
     selectedCondition = widget.tool?.statusItem ?? 'good';
 
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final data = await CategoryService().fetchCategories();
+
+    setState(() {
+      categories = data;
+
+      selectedCategory = widget.tool != null
+          ? categories.firstWhere((c) => c.id == widget.tool!.categoryId)
+          : (categories.isNotEmpty ? categories.first : null);
+    });
   }
 
   @override
@@ -81,59 +91,59 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
               SizedBox(height: 20),
 
               GestureDetector(
-  onTap: _pickImage,
-  child: Container(
-    width: double.infinity,
-    height: 140,
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      color: AppColors.background,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.15),
-          blurRadius: 12,
-          offset: const Offset(0, 6),
-        ),
-      ],
-    ),
-    child: pickedImageBytes != null
-        ? ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.memory(
-              pickedImageBytes!,
-              fit: BoxFit.cover,
-              width: double.infinity,
-            ),
-          )
-        : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.image_outlined, size: 36),
-              SizedBox(height: 6),
-              Text('Tap to upload image'),
-            ],
-          ),
-  ),
-),
+                onTap: _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.background,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: pickedImageBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.memory(
+                            pickedImageBytes!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.image_outlined, size: 36),
+                            SizedBox(height: 6),
+                            Text('Tap to upload image'),
+                          ],
+                        ),
+                ),
+              ),
 
               const SizedBox(height: 20),
 
               _input('Name', nameCtrl),
-              _dropdown(
+              _dropdownCategory(
                 'Category',
                 selectedCategory,
-                categoryNames,
+                categories,
                 (v) => setState(() => selectedCategory = v),
               ),
+
               _input('Stock', stockCtrl, number: true),
               _dropdown(
-  'Condition',
-  selectedCondition,
-  ['good', 'in_repair'],
-  (v) => setState(() => selectedCondition = v),
-),
-
+                'Condition',
+                selectedCondition,
+                ['good', 'in_repair'],
+                (v) => setState(() => selectedCondition = v),
+              ),
 
               const SizedBox(height: 24),
 
@@ -153,9 +163,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                       label: 'Done',
                       icon: Icons.check,
                       onTap: () {
-                        Navigator.pop(
-                          context, true
-                        );
+                        _submit();
                       },
                     ),
                   ),
@@ -259,6 +267,51 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
     );
   }
 
+  Widget _dropdownCategory(
+    String label,
+    CategoryModel? value,
+    List<CategoryModel> items,
+    ValueChanged<CategoryModel?> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: AppColors.background,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<CategoryModel>(
+                value: value,
+                isExpanded: true,
+                items: items.map((c) {
+                  return DropdownMenuItem<CategoryModel>(
+                    value: c,
+                    child: Text(c.name),
+                  );
+                }).toList(),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _actionButton({
     required String label,
     required IconData icon,
@@ -287,5 +340,50 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    if (selectedCategory == null) return;
+
+    String? imageUrl;
+
+    if (pickedImageBytes != null) {
+      final fileName = 'tools/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      await Supabase.instance.client.storage
+          .from('items')
+          .uploadBinary(
+            fileName,
+            pickedImageBytes!,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+
+      imageUrl = Supabase.instance.client.storage
+          .from('items')
+          .getPublicUrl(fileName);
+    }
+
+    if (widget.tool == null) {
+      await ToolService().createTool(
+        name: nameCtrl.text,
+        categoryId: selectedCategory!.id,
+        description: null,
+        imagePath: imageUrl,
+        stock: int.parse(stockCtrl.text),
+        statusItem: selectedCondition,
+      );
+    } else {
+      await ToolService().updateTool(
+        itemId: widget.tool!.itemId,
+        name: nameCtrl.text,
+        categoryId: selectedCategory!.id,
+        description: null,
+        imagePath: imageUrl ?? widget.tool!.imagePath,
+        stockAvailable: int.parse(stockCtrl.text),
+        statusItem: selectedCondition,
+      );
+    }
+
+    Navigator.pop(context, true);
   }
 }
