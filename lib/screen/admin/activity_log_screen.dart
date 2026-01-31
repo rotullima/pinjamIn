@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/activity_log_dummy.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_header.dart';
 import '../../services/auth/user_session.dart';
+import '../../services/activity_log_service.dart';
+import '../../models/activity_log_model.dart';
 
 class ActivityLogScreen extends StatefulWidget {
   const ActivityLogScreen({super.key});
@@ -14,6 +15,34 @@ class ActivityLogScreen extends StatefulWidget {
 
 class _ActivityLogScreenState extends State<ActivityLogScreen> {
   bool isOpen = false;
+  bool _isLoading = true;
+  List<ActivityLog> _activityLogs = [];
+  final ActivityLogService _activityLogService = ActivityLogService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchActivityLogs();
+  }
+
+  Future<void> _fetchActivityLogs() async {
+    try {
+      setState(() => _isLoading = true);
+      final logs = await _activityLogService.fetchActivityLogs();
+      setState(() {
+        _activityLogs = logs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading activity logs: $e');
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load activity logs: $e')),
+        );
+      }
+    }
+  }
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
@@ -39,14 +68,18 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                 ),
 
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: activityLogDummies.length,
-                    itemBuilder: (context, index) {
-                      final log = activityLogDummies[index];
-                      return _ActivityLogCard(log: log);
-                    },
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _activityLogs.isEmpty
+                          ? const Center(child: Text('No activity logs found'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: _activityLogs.length,
+                              itemBuilder: (context, index) {
+                                final log = _activityLogs[index];
+                                return _ActivityLogCard(log: log);
+                              },
+                            ),
                 ),
               ],
             ),
@@ -64,7 +97,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 }
 
 class _ActivityLogCard extends StatelessWidget {
-  final ActivityLogDummy log;
+  final ActivityLog log;
 
   const _ActivityLogCard({required this.log});
 
@@ -88,7 +121,11 @@ class _ActivityLogCard extends StatelessWidget {
         return 'REJECT loan "${log.entityName}"';
 
       case ActionEnum.edit:
-        return 'EDIT profile "${log.entityName}" (role: ${log.newValue})';
+        if (log.entity == EntityEnum.profile) {
+          return 'EDIT profile "${log.userName}" (role: ${log.newValue})';
+        } else {
+          return 'EDIT ${log.entity.name} "${log.entityName}" (${log.fieldName}: ${log.oldValue} → ${log.newValue})';
+        }
 
       case ActionEnum.returnLoan:
         return 'RETURNED "${log.entityName}"';
@@ -129,7 +166,7 @@ class _ActivityLogCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _RoleChip(role: log.role),
+              _RoleChip(role: log.userRole),
             ],
           ),
 
