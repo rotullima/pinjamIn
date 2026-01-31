@@ -3,7 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../models/user_model.dart'; // <-- import AppUser
 
 class UserFormSheet extends StatefulWidget {
-  final AppUser? user; // <-- Ganti ke AppUser
+  final UserModel? user; // <-- Ganti ke AppUser
 
   const UserFormSheet({super.key, this.user});
 
@@ -21,16 +21,14 @@ class _UserFormSheetState extends State<UserFormSheet> {
   void initState() {
     super.initState();
     nameCtrl = TextEditingController(text: widget.user?.name ?? '');
-    emailCtrl = TextEditingController(); // Email tidak diisi kalau edit (karena tidak bisa ubah)
+    emailCtrl = TextEditingController(text: widget.user?.email ?? '');
     passwordCtrl = TextEditingController(); // Password kosong kalau edit (tidak bisa ubah lewat form ini)
 
-    // Pre-fill role kalau edit
-    selectedRole = widget.user?.role ?? 'officer';
-
-    // Kalau edit, email bisa ditampilkan tapi read-only
-    if (widget.user != null) {
-      emailCtrl.text = widget.user!.email;
-    }
+    // Pre-fill role kalau edit, pastikan nilai valid
+    final userRole = widget.user?.role;
+    selectedRole = (userRole == 'admin' || userRole == 'officer' || userRole == 'borrower') 
+        ? userRole! 
+        : 'officer';
   }
 
   @override
@@ -74,12 +72,10 @@ class _UserFormSheetState extends State<UserFormSheet> {
 
               _roleDropdown(),
 
-              // Email: read-only kalau edit
+              // Email: bisa diubah untuk edit
               _input(
                 'Email',
                 emailCtrl,
-                readOnly: isEdit,
-                hint: isEdit ? 'Email tidak bisa diubah' : null,
               ),
 
               // Password: hanya wajib untuk add new, kosong/hidden kalau edit
@@ -112,14 +108,29 @@ class _UserFormSheetState extends State<UserFormSheet> {
                           return;
                         }
 
-                        // Untuk add new: email & password wajib
-                        if (!isEdit) {
-                          if (emailCtrl.text.trim().isEmpty || passwordCtrl.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Email dan password wajib diisi!')),
-                            );
-                            return;
-                          }
+                        // Validasi email
+                        final email = emailCtrl.text.trim();
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Email wajib diisi!')),
+                          );
+                          return;
+                        }
+
+                        // Validasi format email
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Format email tidak valid!')),
+                          );
+                          return;
+                        }
+
+                        // Untuk add new: password wajib
+                        if (!isEdit && passwordCtrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Password wajib diisi!')),
+                          );
+                          return;
                         }
 
                         Navigator.pop(
@@ -128,7 +139,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
                             'name': nameCtrl.text.trim(),
                             'role': selectedRole,
                             'email': emailCtrl.text.trim(),
-                            'password': passwordCtrl.text.trim(),
+                            if (!isEdit) 'password': passwordCtrl.text.trim(), // Password hanya untuk add new
                           },
                         );
                       },
@@ -149,6 +160,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
     bool readOnly = false,
     bool obscureText = false,
     String? hint,
+    bool enabled = true, // Tambah parameter enabled
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -175,6 +187,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
             child: TextField(
               controller: ctrl,
               readOnly: readOnly,
+              enabled: enabled, // Tambah enabled
               obscureText: obscureText,
               decoration: InputDecoration(
                 hintText: hint,
