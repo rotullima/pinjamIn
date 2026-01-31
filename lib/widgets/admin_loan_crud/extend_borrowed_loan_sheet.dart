@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/loan_dummy.dart';
-import '../../dummy/tools/tools_dummy.dart';
+import '../../models/loan_model.dart';
+import '../../services/admin_loan_action_service.dart';
 import '../confirm_snackbar.dart';
 
 class ExtendBorrowedLoanSheet extends StatefulWidget {
-  final LoanDummy loan;
+  final LoanModel loan;
 
   const ExtendBorrowedLoanSheet({super.key, required this.loan});
 
@@ -15,39 +15,31 @@ class ExtendBorrowedLoanSheet extends StatefulWidget {
 }
 
 class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
-  late DateTime _startDate;
   late DateTime _endDate;
-
-  late TextEditingController _startDateCtrl;
   late TextEditingController _endDateCtrl;
-
-  late List<LoanItemDummy> selectedItems;
-  bool showAddTool = false;
-  ToolDummy? selectedTool;
 
   @override
   void initState() {
     super.initState();
-
-    _startDate = widget.loan.startDate;
     _endDate = widget.loan.endDate;
-
-    _startDateCtrl = TextEditingController(text: _fmt(_startDate));
     _endDateCtrl = TextEditingController(text: _fmt(_endDate));
-
-    selectedItems = List.from(widget.loan.items);
   }
 
   String _fmt(DateTime d) =>
-      "${d.day.toString().padLeft(2, '0')}/"
-      "${d.month.toString().padLeft(2, '0')}/"
-      "${d.year}";
+      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
 
-  Future<void> _selectDate(bool isStart) async {
+  Future<void> _selectDate() async {
+    DateTime initial = _endDate;
+    final today = DateTime.now();
+
+    if (initial.isBefore(today)) {
+      initial = DateTime(today.year, today.month, today.day);
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initial,
+      firstDate: today,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
@@ -64,15 +56,29 @@ class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
     );
 
     if (picked != null) {
+      final safePicked = DateTime(picked.year, picked.month, picked.day);
+
       setState(() {
-        if (isStart) {
-          _startDate = picked;
-          _startDateCtrl.text = _fmt(picked);
-        } else {
-          _endDate = picked;
-          _endDateCtrl.text = _fmt(picked);
-        }
+        _endDate = safePicked;
+        _endDateCtrl.text = _fmt(safePicked);
       });
+    }
+  }
+
+  Future<void> _save() async {
+    final today = DateTime.now();
+
+    if (_endDate.isBefore(today)) {
+      showConfirmSnackBar(context, 'the return date cannot be in the past');
+      return;
+    }
+
+    try {
+      await LoanService.extendLoan(widget.loan.loanId, _endDate);
+      showConfirmSnackBar(context, 'borrowed loan extended');
+      Navigator.pop(context, true);
+    } catch (e) {
+      showConfirmSnackBar(context, 'Fail extend: $e');
     }
   }
 
@@ -94,7 +100,7 @@ class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
               children: [
                 const Center(
                   child: Text(
-                    'Update Loans',
+                    'Extend Borrowed Loans',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -105,44 +111,35 @@ class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
 
                 const SizedBox(height: 20),
 
-                _label('Name'),
-                _readonlyField(widget.loan.borrower),
+                _label('Borrower'),
+                _readonlyField(widget.loan.borrowerName),
 
                 const SizedBox(height: 14),
 
                 _label('Tools'),
-
-                ...selectedItems.map(
-                  (e) => _box(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            e.name,
-                            style: const TextStyle(color: AppColors.primary),
-                          ),
-                        ),
-                      ],
+                ...widget.loan.details.map(
+                  (detail) => _box(
+                    child: Text(
+                      detail.itemName ?? 'Item #${detail.itemId}',
+                      style: const TextStyle(color: AppColors.primary),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 8),
-
                 const SizedBox(height: 14),
 
                 _label('Start date'),
-                _readonlyField(_startDateCtrl.text),
+                _readonlyField(_fmt(widget.loan.startDate)),
 
                 const SizedBox(height: 14),
 
                 _label('End date'),
-                _dateField(_endDateCtrl, () => _selectDate(false)),
+                _dateField(_endDateCtrl, _selectDate),
 
                 const SizedBox(height: 14),
 
                 _label('Status'),
-                _readonlyField(widget.loan.status),
+                _readonlyField('borrowed'),
 
                 const SizedBox(height: 22),
 
@@ -160,18 +157,7 @@ class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
                       child: _actionButton(
                         label: 'Done',
                         icon: Icons.check,
-                        onTap: () {
-                          showConfirmSnackBar(
-                            context,
-                            'borrowed loan extended',
-                          );
-
-                          Navigator.pop(context, {
-                            'items': selectedItems,
-                            'startDate': _startDate,
-                            'endDate': _endDate,
-                          });
-                        },
+                        onTap: _save,
                       ),
                     ),
                   ],

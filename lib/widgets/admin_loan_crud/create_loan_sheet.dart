@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/loan_dummy.dart';
-import '../../dummy/tools/tools_dummy.dart';
+import '../../models/loan_model.dart';
+import '../../services/admin_loan_action_service.dart';
 import '../confirm_snackbar.dart';
 import '../../widgets/admin_loan_crud/search_dropdown.dart';
 
@@ -13,62 +13,128 @@ class AdminCreateLoanSheet extends StatefulWidget {
 }
 
 class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
-  String? selectedBorrower;
+  BorrowerModel? selectedBorrower;
+  List<BorrowerModel> borrowers = [];
+  bool isLoadingBorrowers = true;
 
   late DateTime _startDate;
   late DateTime _endDate;
-  bool showAddTool = false;
-
   late TextEditingController _startDateCtrl;
   late TextEditingController _endDateCtrl;
 
-  List<LoanItemDummy> selectedItems = [];
+  List<ItemModel> selectedItems = [];
+  List<ItemModel> availableItems = [];
+  bool isLoadingItems = true;
+  bool showAddItem = false;
 
   @override
   void initState() {
     super.initState();
     _startDate = DateTime.now();
-    _endDate = DateTime.now().add(const Duration(days: 1));
-
+    _endDate = DateTime.now().add(const Duration(days: 7)); 
     _startDateCtrl = TextEditingController(text: _fmt(_startDate));
     _endDateCtrl = TextEditingController(text: _fmt(_endDate));
+
+    _loadBorrowers();
+    _loadAvailableItems();
+  }
+
+  Future<void> _loadBorrowers() async {
+    setState(() => isLoadingBorrowers = true);
+    try {
+      final list = await LoanService.fetchBorrowers();
+      setState(() {
+        borrowers = list;
+        isLoadingBorrowers = false;
+      });
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal memuat daftar borrower: $e');
+      setState(() => isLoadingBorrowers = false);
+    }
+  }
+
+  Future<void> _loadAvailableItems() async {
+    setState(() => isLoadingItems = true);
+    try {
+      final items = await LoanService.fetchAvailableItems();
+      setState(() {
+        availableItems = items;
+        isLoadingItems = false;
+      });
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal memuat daftar item: $e');
+      setState(() => isLoadingItems = false);
+    }
   }
 
   String _fmt(DateTime d) =>
-      "${d.day.toString().padLeft(2, '0')}/"
-      "${d.month.toString().padLeft(2, '0')}/"
-      "${d.year}";
+      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
 
   Future<void> _selectDate(bool isStart) async {
-    final picked = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: isStart ? _startDate : _endDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
-    if (picked == null) return;
+    if (picked != null) {
+      final safeDate = DateTime(picked.year, picked.month, picked.day);
+      setState(() {
+        if (isStart) {
+          _startDate = safeDate;
+          _startDateCtrl.text = _fmt(safeDate);
+        } else {
+          _endDate = safeDate;
+          _endDateCtrl.text = _fmt(safeDate);
+        }
+      });
+    }
+  }
 
+  Future<void> _removeItem(ItemModel item) async {
     setState(() {
-      if (isStart) {
-        _startDate = picked;
-        _startDateCtrl.text = _fmt(picked);
-      } else {
-        _endDate = picked;
-        _endDateCtrl.text = _fmt(picked);
-      }
+      selectedItems.remove(item);
     });
   }
 
-  List<ToolDummy> get _availableTools {
-    return toolDummies
-        .where(
-          (t) =>
-              t.stock > 0 &&
-              t.condition == 'good' &&
-              !selectedItems.any((i) => i.name == t.name),
-        )
-        .toList();
+  Future<void> _addItem(ItemModel item) async {
+    setState(() {
+      selectedItems.add(item);
+      showAddItem = false;
+    });
+  }
+
+  Future<void> _submit() async {
+    if (selectedBorrower == null) {
+      showConfirmSnackBar(context, 'Pilih borrower terlebih dahulu');
+      return;
+    }
+    if (selectedItems.isEmpty) {
+      showConfirmSnackBar(context, 'Pilih minimal satu item');
+      return;
+    }
+    if (_endDate.isBefore(_startDate)) {
+      showConfirmSnackBar(context, 'Tanggal akhir tidak boleh sebelum tanggal mulai');
+      return;
+    }
+
+    try {
+      final itemIds = selectedItems.map((i) => i.id).toList();
+
+      await LoanService.createLoan(
+        borrowerId: selectedBorrower!.id,
+        startDate: _startDate,
+        endDate: _endDate,
+        itemIds: itemIds,
+        note: null, 
+      );
+
+      showConfirmSnackBar(context, 'Loan berhasil dibuat');
+      Navigator.pop(context, true); 
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal membuat loan: $e');
+    }
   }
 
   @override
@@ -97,89 +163,76 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
 
                 _label('Borrower'),
                 _box(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  child: SearchDropdown<String>(
-                    items: borrowerNames,
-                    hint: 'Select borrower',
-                    label: (e) => e,
-                    onSelected: (v) {
-                      setState(() => selectedBorrower = v);
-                    },
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  child: isLoadingBorrowers
+                      ? const Center(child: CircularProgressIndicator())
+                      : borrowers.isEmpty
+                          ? const Text('Tidak ada borrower tersedia', style: TextStyle(color: Colors.grey))
+                          : SearchDropdown<BorrowerModel>(
+                              items: borrowers,
+                              hint: 'Pilih borrower',
+                              label: (b) => b.name,
+                              onSelected: (b) {
+                                setState(() => selectedBorrower = b);
+                              },
+                            ),
                 ),
 
                 const SizedBox(height: 14),
 
-                _label('Tools'),
+                _label('Items/Tools'),
 
-                ...selectedItems.map(
-                  (e) => _box(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            e.name,
-                            style: const TextStyle(color: AppColors.primary),
+                ...selectedItems.map((item) => _box(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.name,
+                              style: const TextStyle(color: AppColors.primary),
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            color: Colors.redAccent,
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.redAccent),
+                            onPressed: () => _removeItem(item),
                           ),
-                          onPressed: () {
-                            setState(() => selectedItems.remove(e));
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                        ],
+                      ),
+                    )),
 
-                if (showAddTool)
+                if (showAddItem)
                   _box(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    child: SearchDropdown<ToolDummy>(
-                      items: _availableTools,
-                      hint: 'Select tool',
-                      label: (t) => t.name,
-                      onSelected: (tool) {
-                        setState(() {
-                          selectedItems.add(LoanItemDummy(name: tool.name));
-                          showAddTool = false;
-                        });
-                      },
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    child: isLoadingItems
+                        ? const Center(child: CircularProgressIndicator())
+                        : availableItems.isEmpty
+                            ? const Text('Tidak ada item tersedia', style: TextStyle(color: Colors.grey))
+                            : SearchDropdown<ItemModel>(
+                                items: availableItems,
+                                hint: 'Pilih item',
+                                label: (item) => item.name,
+                                onSelected: _addItem,
+                              ),
                   ),
 
                 const SizedBox(height: 8),
 
                 _addButton(
-                  label: 'Add tool',
-                  onTap: () {
-                    setState(() => showAddTool = true);
-                  },
+                  label: 'Tambah Item',
+                  onTap: () => setState(() => showAddItem = true),
                 ),
 
                 const SizedBox(height: 14),
 
-                _label('Start date'),
+                _label('Start Date'),
                 _dateField(_startDateCtrl, () => _selectDate(true)),
 
                 const SizedBox(height: 14),
 
-                _label('End date'),
+                _label('End Date'),
                 _dateField(_endDateCtrl, () => _selectDate(false)),
 
                 const SizedBox(height: 22),
@@ -198,16 +251,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
                       child: _actionButton(
                         label: 'Submit',
                         icon: Icons.check,
-                        onTap: () {
-                          showConfirmSnackBar(context, 'loan created');
-
-                          Navigator.pop(context, {
-                            'borrower': selectedBorrower,
-                            'items': selectedItems,
-                            'startDate': _startDate,
-                            'endDate': _endDate,
-                          });
-                        },
+                        onTap: _submit,
                       ),
                     ),
                   ],

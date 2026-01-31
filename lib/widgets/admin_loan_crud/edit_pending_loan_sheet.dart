@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../dummy/loan_dummy.dart';
-import '../../dummy/tools/tools_dummy.dart';
+import '../../models/loan_model.dart';
+import '../../services/admin_loan_action_service.dart';
 import '../confirm_snackbar.dart';
 import '../../widgets/admin_loan_crud/search_dropdown.dart';
 
 class EditPendingLoanSheet extends StatefulWidget {
-  final LoanDummy loan;
+  final LoanModel loan;
 
   const EditPendingLoanSheet({super.key, required this.loan});
 
@@ -17,69 +17,116 @@ class EditPendingLoanSheet extends StatefulWidget {
 class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
   late DateTime _startDate;
   late DateTime _endDate;
-
   late TextEditingController _startDateCtrl;
   late TextEditingController _endDateCtrl;
 
-  late List<LoanItemDummy> selectedItems;
-  bool showAddTool = false;
-  ToolDummy? selectedTool;
+  late List<LoanDetailModel> selectedDetails;
+  List<ItemModel> availableItems = [];
+  bool isLoadingItems = true;
+  bool showAddItem = false;
 
   @override
   void initState() {
     super.initState();
-
     _startDate = widget.loan.startDate;
     _endDate = widget.loan.endDate;
-
     _startDateCtrl = TextEditingController(text: _fmt(_startDate));
     _endDateCtrl = TextEditingController(text: _fmt(_endDate));
 
-    selectedItems = List.from(widget.loan.items);
+    selectedDetails = List.from(widget.loan.details);
+    _loadAvailableItems();
+  }
+
+  Future<void> _loadAvailableItems() async {
+    setState(() => isLoadingItems = true);
+    try {
+      final items = await LoanService.fetchAvailableItems();
+      setState(() {
+        availableItems = items.where((item) {
+          return !selectedDetails.any((d) => d.itemId == item.id);
+        }).toList();
+        isLoadingItems = false;
+      });
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal memuat daftar item: $e');
+      setState(() => isLoadingItems = false);
+    }
   }
 
   String _fmt(DateTime d) =>
-      "${d.day.toString().padLeft(2, '0')}/"
-      "${d.month.toString().padLeft(2, '0')}/"
-      "${d.year}";
+      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
 
   Future<void> _selectDate(bool isStart) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      initialDate: isStart ? _startDate : _endDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
     );
 
     if (picked != null) {
+      final safeDate = DateTime(picked.year, picked.month, picked.day);
+
       setState(() {
         if (isStart) {
-          _startDate = picked;
-          _startDateCtrl.text = _fmt(picked);
+          _startDate = safeDate;
+          _startDateCtrl.text = _fmt(safeDate);
         } else {
-          _endDate = picked;
-          _endDateCtrl.text = _fmt(picked);
+          _endDate = safeDate;
+          _endDateCtrl.text = _fmt(safeDate);
         }
       });
     }
   }
 
-  List<ToolDummy> get _availableTools {
-    return toolDummies
-        .where((t) => !selectedItems.any((i) => i.name == t.name))
-        .toList();
+  Future<void> _removeItem(LoanDetailModel detail) async {
+    try {
+      await LoanService.removeItemFromLoan(detail.loanDetailId!);
+      setState(() {
+        selectedDetails.remove(detail);
+      });
+      await _loadAvailableItems();
+      showConfirmSnackBar(context, 'Item dihapus dari pinjaman');
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal menghapus: $e');
+    }
+  }
+
+  Future<void> _addItem(ItemModel item) async {
+    try {
+      await LoanService.addItemToLoan(widget.loan.loanId, item.id);
+      setState(() {
+        selectedDetails.add(
+          LoanDetailModel(
+            loanDetailId: null,
+            itemId: item.id,
+            itemName: item.name,
+          ),
+        );
+        showAddItem = false;
+      });
+      await _loadAvailableItems();
+      showConfirmSnackBar(context, '${item.name} ditambahkan');
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal menambahkan: $e');
+    }
+  }
+
+  Future<void> _save() async {
+    try {
+      if (_startDate != widget.loan.startDate ||
+          _endDate != widget.loan.endDate) {
+        await LoanService.updateLoanDates(
+          widget.loan.loanId,
+          startDate: _startDate != widget.loan.startDate ? _startDate : null,
+          endDate: _endDate != widget.loan.endDate ? _endDate : null,
+        );
+      }
+      showConfirmSnackBar(context, 'Peminjaman pending berhasil diperbarui');
+      Navigator.pop(context, true);
+    } catch (e) {
+      showConfirmSnackBar(context, 'Gagal menyimpan: $e');
+    }
   }
 
   @override
@@ -100,7 +147,7 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
               children: [
                 const Center(
                   child: Text(
-                    'Update Loans',
+                    'Edit Pending Loan',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -108,23 +155,22 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
 
-                _label('Name'),
-                _readonlyField(widget.loan.borrower),
+                _label('Borrower'),
+                _readonlyField(widget.loan.borrowerName),
 
                 const SizedBox(height: 14),
 
-                _label('Tools'),
+                _label('Items/Tools'),
 
-                ...selectedItems.map(
-                  (e) => _box(
+                ...selectedDetails.map(
+                  (detail) => _box(
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
-                            e.name,
+                            detail.itemName ?? 'Item #${detail.itemId}',
                             style: const TextStyle(color: AppColors.primary),
                           ),
                         ),
@@ -133,57 +179,55 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
                             Icons.close,
                             color: Colors.redAccent,
                           ),
-                          onPressed: () {
-                            setState(() => selectedItems.remove(e));
-                          },
+                          onPressed: () => _removeItem(detail),
                         ),
                       ],
                     ),
                   ),
                 ),
 
-                if (showAddTool)
+                if (showAddItem)
                   _box(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 6,
                     ),
-                    child: SearchDropdown<ToolDummy>(
-                      items: _availableTools,
-                      hint: 'Select tool',
-                      label: (t) => t.name,
-                      onSelected: (tool) {
-                        setState(() {
-                          selectedItems.add(LoanItemDummy(name: tool.name));
-                          showAddTool = false;
-                        });
-                      },
-                    ),
+                    child: isLoadingItems
+                        ? const Center(child: CircularProgressIndicator())
+                        : availableItems.isEmpty
+                        ? const Text(
+                            'Tidak ada item tersedia',
+                            style: TextStyle(color: Colors.grey),
+                          )
+                        : SearchDropdown<ItemModel>(
+                            items: availableItems,
+                            hint: 'Pilih item',
+                            label: (item) => item.name,
+                            onSelected: _addItem,
+                          ),
                   ),
 
                 const SizedBox(height: 8),
 
                 _addButton(
-                  label: 'Add tool',
-                  onTap: () {
-                    setState(() => showAddTool = true);
-                  },
+                  label: 'Tambah Item',
+                  onTap: () => setState(() => showAddItem = true),
                 ),
 
                 const SizedBox(height: 14),
 
-                _label('Start date'),
+                _label('Start Date'),
                 _dateField(_startDateCtrl, () => _selectDate(true)),
 
                 const SizedBox(height: 14),
 
-                _label('End date'),
-                _dateField(_endDateCtrl, () => _selectDate(true)),
+                _label('End Date'),
+                _dateField(_endDateCtrl, () => _selectDate(false)),
 
                 const SizedBox(height: 14),
 
                 _label('Status'),
-                _readonlyField(widget.loan.status),
+                _readonlyField('pending'),
 
                 const SizedBox(height: 22),
 
@@ -199,17 +243,9 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _actionButton(
-                        label: 'Done',
+                        label: 'Simpan',
                         icon: Icons.check,
-                        onTap: () {
-                          showConfirmSnackBar(context, 'pending loan updated');
-
-                          Navigator.pop(context, {
-                            'items': selectedItems,
-                            'startDate': _startDate,
-                            'endDate': _endDate,
-                          });
-                        },
+                        onTap: _save,
                       ),
                     ),
                   ],
