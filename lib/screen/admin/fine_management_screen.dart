@@ -6,8 +6,8 @@ import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/tools/fine_form_sheet.dart';
 import '../../services/auth/user_session.dart';
-import '../../services/fine_service.dart';
-import '../../models/fine_model.dart';
+import '../../services/tools/fine_service.dart';
+import '../../models/tools/fine_model.dart';
 
 class FineManagementScreen extends StatefulWidget {
   const FineManagementScreen({super.key});

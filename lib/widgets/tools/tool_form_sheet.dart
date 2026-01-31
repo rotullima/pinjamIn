@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:pinjamln/models/tools/tool_model.dart';
 import '../../constants/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/category_model.dart';
-import '../../services/category_service.dart';
+import '../../models/tools/category_model.dart';
+import '../../services/tools/category_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/tools/tool_service.dart';
 

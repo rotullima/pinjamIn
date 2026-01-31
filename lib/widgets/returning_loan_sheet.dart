@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
-import '../../dummy/loan_dummy.dart';
-import '../../dummy/tools/fine_dummy.dart';
-import '../../models/loan_fine_state.dart';
-import '../confirm_snackbar.dart';
+import '../constants/app_colors.dart';
+import '../dummy/loan_dummy.dart';
+import '../dummy/tools/fine_dummy.dart';
+import '../models/loan_fine_state.dart';
+import 'confirm_snackbar.dart';
 
 class ReturningLoanSheet extends StatefulWidget {
   final LoanDummy loan;

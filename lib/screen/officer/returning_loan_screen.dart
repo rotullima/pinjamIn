@@ -4,7 +4,7 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/returning_loan/returning_loan_sheet.dart';
+import '../../widgets/returning_loan_sheet.dart';
 import '../../dummy/loan_dummy.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';

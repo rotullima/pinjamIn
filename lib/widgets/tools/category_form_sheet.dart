@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../models/category_model.dart';
+import '../../models/tools/category_model.dart';
 
 class CategoryFormSheet extends StatefulWidget {
   final CategoryModel? category;

@@ -6,8 +6,8 @@ import '../../widgets/app_drawer.dart';
 import '../../widgets/tools/category_form_sheet.dart';
 import '../../services/auth/user_session.dart';
 import '../../widgets/app_search_field.dart';
-import '../../services/category_service.dart';
-import '../../models/category_model.dart';
+import '../../services/tools/category_service.dart';
+import '../../models/tools/category_model.dart';
 import '../../widgets/app_toast.dart';
 
 class CategoryManagementScreen extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../models/fine_model.dart';
+import '../../models/tools/fine_model.dart';
 
 class FineFormSheet extends StatefulWidget {
   final FineModel? fine;

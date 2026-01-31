@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/fine_model.dart';
+import '../../models/tools/fine_model.dart';
 
 class FineService {
   final SupabaseClient _supabase = Supabase.instance.client;

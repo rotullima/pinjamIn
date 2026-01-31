@@ -6,9 +6,11 @@ import '../widgets/app_search_field.dart';
 import '../widgets/dashboard/print_report_button.dart';
 import '../widgets/dashboard/stat_card.dart';
 import '../widgets/loan_card.dart';
-import '../dummy/dashboard/dashboard_stats_dummy.dart';
-import '../dummy/loan_dummy.dart';
 import '../services/auth/user_session.dart';
+import '../services/dashboard_service.dart';
+import '../models/loan_model.dart';
+import '../dummy/loan_dummy.dart';
+import '../services/print_report_Service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,7 +25,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _searchQuery = '';
 
   final String currentRole = UserSession.role;
+  final String currentBorrowerId = UserSession.id;
   final String currentBorrowerName = UserSession.name;
+
+  List<DashboardStatModel> _stats = [];
+  List<LoanModel> _displayedLoans = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -32,50 +39,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase().trim();
       });
+      _filterLoans();
+    });
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final stats = await DashboardService.fetchStats(
+        currentRole,
+        borrowerId: currentRole == 'borrower' ? currentBorrowerId : null,
+      );
+
+      final loans = await DashboardService.fetchAllLoans(
+        query: currentRole == 'borrower' ? currentBorrowerName : '',
+      );
+
+      setState(() {
+        _stats = stats;
+        _displayedLoans = loans;
+      });
+    } catch (e) {
+      debugPrint('Error loading dashboard: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _filterLoans() {
+    if (_searchQuery.isEmpty || currentRole == 'borrower') return;
+
+    final filtered = _displayedLoans
+        .where((loan) => loan.borrowerName.toLowerCase().contains(_searchQuery))
+        .toList();
+
+    setState(() {
+      _displayedLoans = filtered;
     });
   }
+
+  void toggleDrawer() => setState(() => isOpen = !isOpen);
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void toggleDrawer() => setState(() => isOpen = !isOpen);
-
-  List<DashboardStat> get _stats {
-    if (currentRole == 'admin') {
-      return adminStatsDummy;
-    } else {
-      return officerBorrowerStatsDummy;
-    }
-  }
-
-  List<LoanDummy> get _displayedLoans {
-    var loans = loanDummies;
-
-    if (currentRole == 'borrower') {
-      loans = loans
-          .where(
-            (loan) =>
-                loan.borrower.toLowerCase() ==
-                    currentBorrowerName.toLowerCase() &&
-                (loan.status == 'pending' || loan.status == 'approved'),
-          )
-          .toList();
-    }
-
-    if (_searchQuery.isNotEmpty && currentRole != 'borrower') {
-      loans = loans
-          .where((loan) => loan.borrower.toLowerCase().contains(_searchQuery))
-          .toList();
-    }
-
-    if (loans.length > 5) {
-      loans = loans.sublist(0, 5);
-    }
-
-    return loans;
   }
 
   @override
@@ -91,59 +101,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.all(16),
                   child: AppHeader(title: _getTitle(), onToggle: toggleDrawer),
                 ),
-
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _stats.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 1.2,
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Column(
+                            children: [
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _stats.length,
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 12,
+                                      crossAxisSpacing: 12,
+                                      childAspectRatio: 1.2,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  final stat = _stats[index];
+                                  return DashboardStatCard(
+                                    icon: _iconForStat(stat.title),
+                                    title: stat.title,
+                                    value: stat.value,
+                                    subtitle: stat.subtitle,
+                                  );
+                                },
                               ),
-                          itemBuilder: (context, index) {
-                            final stat = _stats[index];
-                            return DashboardStatCard(
-                              icon: stat.icon,
-                              title: stat.title,
-                              value: stat.value,
-                              subtitle: stat.subtitle,
-                            );
-                          },
-                        ),
+                              const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: SearchField(
+                                      controller: _searchController,
+                                    ),
+                                  ),
+                                  if (currentRole == 'officer')
+                                    PrintReportButton(
+                                      onTap: () async {
+                                        await PrintReportService.printFullReport();
+                                      },
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
 
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SearchField(controller: _searchController),
-                            ),
-
-                            if (currentRole == 'officer')
-                              PrintReportButton(onTap: () {}),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        Expanded(
-                          child: ListView.builder(
-                            padding: const EdgeInsets.only(bottom: 120),
-                            itemCount: _displayedLoans.length,
-                            itemBuilder: (context, index) {
-                              return LoanListCard(data: _displayedLoans[index]);
-                            },
+                              Expanded(
+                                child: _displayedLoans.isEmpty
+                                    ? const Center(
+                                        child: Text(
+                                          'No loan data',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      )
+                                    : ListView.builder(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 120,
+                                        ),
+                                        itemCount: _displayedLoans.length,
+                                        itemBuilder: (context, index) {
+                                          final loan = _displayedLoans[index];
+                                          return LoanListCard(
+                                            data: _adaptToDummy(loan),
+                                          );
+                                        },
+                                      ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ],
@@ -171,5 +201,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         return 'Dashboard';
     }
+  }
+
+  IconData _iconForStat(String title) {
+    switch (title.toLowerCase()) {
+      case 'tools':
+        return Icons.build_outlined;
+      case 'users':
+        return Icons.group_outlined;
+      case 'borrowed':
+        return Icons.outbond;
+      case 'penalty':
+        return Icons.attach_money;
+      case 'pending':
+        return Icons.access_time;
+      case 'approved':
+        return Icons.calendar_month;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  LoanDummy _adaptToDummy(LoanModel loan) {
+    final items = loan.details.isNotEmpty
+        ? loan.details
+              .map(
+                (d) => LoanItemDummy(name: d.itemName ?? 'Item #${d.itemId}'),
+              )
+              .toList()
+        : [LoanItemDummy(name: 'No items')];
+
+    return LoanDummy(
+      borrower: loan.borrowerName,
+      startDate: loan.startDate,
+      endDate: loan.endDate,
+      items: items,
+      status: loan.status.toString().split('.').last,
+      conditionNote: null,
+      fineAmount: loan.lateFine?.toInt(),
+      penaltyDays: null,
+      isPaid: null,
+    );
   }
 }
