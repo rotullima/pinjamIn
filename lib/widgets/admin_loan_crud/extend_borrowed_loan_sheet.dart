@@ -74,7 +74,7 @@ class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
     }
 
     try {
-      await LoanService.extendLoan(widget.loan.loanId, _endDate);
+      await LoanActionService.extendLoan(widget.loan.loanId, _endDate);
       showConfirmSnackBar(context, 'borrowed loan extended');
       Navigator.pop(context, true);
     } catch (e) {

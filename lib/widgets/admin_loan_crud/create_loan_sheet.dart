@@ -42,7 +42,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
   Future<void> _loadBorrowers() async {
     setState(() => isLoadingBorrowers = true);
     try {
-      final list = await LoanService.fetchBorrowers();
+      final list = await LoanActionService.fetchBorrowers();
       setState(() {
         borrowers = list;
         isLoadingBorrowers = false;
@@ -56,7 +56,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
   Future<void> _loadAvailableItems() async {
     setState(() => isLoadingItems = true);
     try {
-      final items = await LoanService.fetchAvailableItems();
+      final items = await LoanActionService.fetchAvailableItems();
       setState(() {
         availableItems = items;
         isLoadingItems = false;
@@ -122,7 +122,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
     try {
       final itemIds = selectedItems.map((i) => i.id).toList();
 
-      await LoanService.createLoan(
+      await LoanActionService.createLoan(
         borrowerId: selectedBorrower!.id,
         startDate: _startDate,
         endDate: _endDate,

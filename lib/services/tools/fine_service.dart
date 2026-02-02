@@ -8,6 +8,7 @@ class FineService {
     final res = await _supabase
         .from('damage_fines')
         .select()
+        .eq('is_active', true)
         .order('created_at');
     return (res as List).map((e) => FineModel.fromJson(e)).toList();
   }
@@ -36,6 +37,8 @@ class FineService {
   }
 
   Future<void> deleteFine(int fineId) async {
-    await _supabase.from('damage_fines').delete().eq('fine_id', fineId);
+    await _supabase.from('damage_fines')
+      .update({'is_active': false})
+      .eq('fine_id', fineId);
   }
 }

@@ -4,10 +4,10 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/confirm_snackbar.dart';
-import '../../dummy/loan_dummy.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
+import '../../models/loan_model.dart';
+import '../../services/loan_list_service.dart';
 
 class LoanListScreen extends StatefulWidget {
   const LoanListScreen({super.key});
@@ -19,125 +19,139 @@ class LoanListScreen extends StatefulWidget {
 class _LoanListScreenState extends State<LoanListScreen> {
   bool isOpen = false;
   final TextEditingController _searchCtrl = TextEditingController();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   String _query = '';
-
   String _selectedStatus = 'borrowed';
+
+  List<LoanModel> _loans = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+
     _searchCtrl.addListener(() {
       setState(() {
         _query = _searchCtrl.text.toLowerCase().trim();
       });
     });
+
+    _fetchLoans();
   }
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
-  List<LoanDummy> get _filteredLoans {
-    return loanDummies.where((loan) {
-      final matchUser = UserSession.role != 'borrower'
-          ? true
-          : loan.borrower.toLowerCase() == UserSession.name.toLowerCase();
+  Future<void> _fetchLoans() async {
+    try {
+      final loans = await LoanListService.fetchLoans(
+        borrowerNameQuery: '', 
+      );
+      final filteredByUser = loans.where(
+        (loan) =>
+            loan.borrowerName.toLowerCase() == UserSession.name.toLowerCase(),
+      );
+      setState(() {
+        _loans = filteredByUser.toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      debugPrint('Failed to fetch loans: $e');
+    }
+  }
 
+  List<LoanModel> get _filteredLoans {
+    return _loans.where((loan) {
       final matchSearch =
-          _query.isEmpty || loan.borrower.toLowerCase().contains(_query);
+          _query.isEmpty || loan.borrowerName.toLowerCase().contains(_query);
 
       final matchStatus =
           _selectedStatus == 'all' ||
-          loan.status.toLowerCase() == _selectedStatus;
+          loan.status.toString().split('.').last == _selectedStatus;
 
-      return matchUser && matchSearch && matchStatus;
+      return matchSearch && matchStatus;
     }).toList();
   }
 
   Widget _buildFilterButton() {
     return PopupMenuButton<String>(
-  initialValue: _selectedStatus,
-  onSelected: (value) {
-    setState(() => _selectedStatus = value);
-  },
-  offset: const Offset(0, 44),
-  elevation: 6,
-  color: AppColors.primary,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
-  ),
-  itemBuilder: (context) => [
-    _popupItem(
-      value: 'borrowed',
-      icon: Icons.arrow_forward,
-      label: 'Borrowed',
-    ),
-    _popupItem(
-      value: 'penalty',
-      icon: Icons.attach_money,
-      label: 'Penalty',
-    ),
-    _popupItem(
-      value: 'returned',
-      icon: Icons.keyboard_return,
-      label: 'Returned',
-    ),
-  ],
-  child: const Icon(
-    Icons.filter_alt_outlined,
-    color: AppColors.secondary,
-    size: 28,
-  ),
-);
+      initialValue: _selectedStatus,
+      onSelected: (value) {
+        setState(() => _selectedStatus = value);
+      },
+      offset: const Offset(0, 44),
+      elevation: 6,
+      color: AppColors.primary,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      itemBuilder: (context) => [
+        _popupItem(
+          value: 'borrowed',
+          icon: Icons.arrow_forward,
+          label: 'Borrowed',
+        ),
+        _popupItem(
+          value: 'penalty',
+          icon: Icons.attach_money,
+          label: 'Penalty',
+        ),
+        _popupItem(
+          value: 'returned',
+          icon: Icons.keyboard_return,
+          label: 'Returned',
+        ),
+      ],
+      child: const Icon(
+        Icons.filter_alt_outlined,
+        color: AppColors.secondary,
+        size: 28,
+      ),
+    );
   }
 
   PopupMenuItem<String> _popupItem({
-  required String value,
-  required IconData icon,
-  required String label,
+    required String value,
+    required IconData icon,
+    required String label,
+  }) {
+    final bool isActive = value == _selectedStatus;
 
-}) {
-  final bool isActive = value == _selectedStatus;
-  
-  return PopupMenuItem<String>(
-    value: value,
-    height: 44,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(8),
-    color: isActive
-        ? AppColors.secondary.withOpacity(0.15)
-        : Colors.transparent,
-  ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: AppColors.secondary,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.background,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+    return PopupMenuItem<String>(
+      value: value,
+      height: 44,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: isActive
+              ? AppColors.secondary.withOpacity(0.15)
+              : Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.secondary),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.background,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     if (UserSession.role != 'borrower') {
       return const Scaffold(body: Center(child: Text('Access denied')));
     }
-    final filteredLoans = _filteredLoans;
 
     return Scaffold(
+      key: _scaffoldMessengerKey,
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Stack(
@@ -162,7 +176,9 @@ class _LoanListScreenState extends State<LoanListScreen> {
                 const SizedBox(height: 16),
 
                 Expanded(
-                  child: filteredLoans.isEmpty
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredLoans.isEmpty
                       ? const Center(
                           child: Text(
                             'No loan data',
@@ -171,25 +187,49 @@ class _LoanListScreenState extends State<LoanListScreen> {
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: filteredLoans.length,
+                          itemCount: _filteredLoans.length,
                           itemBuilder: (context, index) {
-                            final loan = filteredLoans[index];
+                            final loan = _filteredLoans[index];
 
                             List<LoanAction> actions = [];
 
-                            if (loan.status.toLowerCase() == 'borrowed') {
+                            if (loan.status == LoanStatus.borrowed) {
                               actions.add(
                                 LoanAction(
-                                  type: LoanActionType.returning,
-                                  label: 'Return',
-                                  onTap: () async {
-                                    showConfirmSnackBar(
-                                      context,
-                                      'Loan has been taken',
-                                    );
-                                    setState(() => loanDummies.remove(loan));
-                                  },
-                                ),
+  type: LoanActionType.returning,
+  label: 'Return',
+  onTap: () async {
+    // 1️⃣ Update status lokal supaya UI langsung berubah
+    setState(() {
+      loan.status = LoanStatus.returning;
+    });
+
+    // 2️⃣ Update status di backend Supabase
+    try {
+      await LoanListService.updateLoanStatus(
+        loanId: loan.loanId,
+        newStatus: LoanStatus.returning,
+      );
+
+      // 3️⃣ Tampilkan snackbar hanya jika widget masih aktif
+      if (!mounted) return;
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+  SnackBar(content: Text('Loan status updated to returning')),
+);
+    } catch (e) {
+      if (!mounted) return;
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+  SnackBar(content: Text('Failed to update status: $e')),
+
+      );
+      // Jika gagal update backend, rollback status lokal
+      setState(() {
+        loan.status = LoanStatus.borrowed;
+      });
+    }
+  },
+)
+
                               );
                             }
 

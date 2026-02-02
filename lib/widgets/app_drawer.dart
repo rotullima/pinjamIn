@@ -170,30 +170,30 @@ class AppDrawer extends StatelessWidget {
             );
           },
         },
-        {
-          'icon': Icons.south_west,
-          'label': 'Returning Loan List',
-          'onTap': () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ReturningLoanScreen(),
-              ),
-            );
-          },
-        },
-        {
-          'icon': Icons.attach_money,
-          'label': 'Penalty Loan List',
-          'onTap': () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const PenaltyLoanScreen(),
-              ),
-            );
-          },
-        },
+        // {
+        //   'icon': Icons.south_west,
+        //   'label': 'Returning Loan List',
+        //   'onTap': () {
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => const ReturningLoanScreen(),
+        //       ),
+        //     );
+        //   },
+        // },
+        // {
+        //   'icon': Icons.attach_money,
+        //   'label': 'Penalty Loan List',
+        //   'onTap': () {
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(
+        //         builder: (context) => const PenaltyLoanScreen(),
+        //       ),
+        //     );
+        //   },
+        // },
       ]);
     } else if (role == 'borrower') {
       menuItems.addAll([

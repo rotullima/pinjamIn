@@ -23,14 +23,13 @@ class UserSession {
     name = '';
   }
 
-  /// Restore session from Supabase auth state
+  // Restore session from Supabase auth state
   static Future<bool> restoreSession() async {
     try {
       final session = Supabase.instance.client.auth.currentSession;
       if (session?.user != null) {
         final user = session!.user;
         
-        // Get profile data from Supabase
         final profile = await Supabase.instance.client
             .from('profiles')
             .select()
@@ -47,7 +46,6 @@ class UserSession {
       }
       return false;
     } catch (e) {
-      // Clear session if there's an error
       clear();
       return false;
     }

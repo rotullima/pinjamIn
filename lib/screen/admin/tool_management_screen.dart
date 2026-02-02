@@ -8,7 +8,7 @@ import '../../widgets/app_search_field.dart';
 import '../../widgets/confirm_delete_dialog.dart';
 import '../../services/auth/user_session.dart';
 import '../../widgets/tools/tool_form_sheet.dart';
-import '../../services/tools/tool_service.dart';
+import '../../services/tools/tool_admin_service.dart';
 import '../../models/tools/tool_model.dart';
 
 class ToolManagementScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
   bool isOpen = false;
   final TextEditingController _searchCtrl = TextEditingController();
 
-  final ToolService _toolService = ToolService();
+  final ToolAdminService _toolService = ToolAdminService();
 
   List<ToolModel> tools = [];
   String query = '';

@@ -43,7 +43,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
   Future<void> _fetchLoans() async {
     setState(() => _isLoading = true);
     try {
-      _realLoans = await LoanService.fetchLoans(
+      _realLoans = await LoanActionService.fetchLoans(
         status: _selectedStatus,
         query: _query,
       );
@@ -184,7 +184,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
                             final loan = _filteredLoans[index];
                             final actions = _buildAdminActions(context, loan);
                             return LoanListCard(
-                              data: _adaptToDummy(loan),
+                              data:loan,
                               actions: actions,
                             );
                           },
@@ -251,7 +251,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
             label: 'Delete',
             onTap: () async {
               try {
-                await LoanService.deleteLoan(loan.loanId);
+                await LoanActionService.deleteLoan(loan.loanId);
                 showConfirmSnackBar(context, 'loan deleted');
                 _fetchLoans();
               } catch (e) {
@@ -284,7 +284,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
             label: 'Returning',
             onTap: () async {
               try {
-                await LoanService.updateLoanStatus(
+                await LoanActionService.updateLoanStatus(
                   loan.loanId,
                   LoanStatus.returning,
                 );
@@ -303,7 +303,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
             label: 'Returned',
             onTap: () async {
               try {
-                await LoanService.forceReturnFromPenalty(loan.loanId);
+                await LoanActionService.forceReturnFromPenalty(loan.loanId);
                 showConfirmSnackBar(
                   context,
                   'penalty resolved, force return by admin',

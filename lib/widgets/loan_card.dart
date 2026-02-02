@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pinjamln/models/loan_model.dart';
 import '../constants/app_colors.dart';
-import '../dummy/loan_dummy.dart';
 import '../models/loan_actions.dart';
 
 class LoanListCard extends StatelessWidget {
-  final LoanDummy data;
+  final LoanModel data;
   final List<LoanAction> actions;
 
   const LoanListCard({super.key, required this.data, this.actions = const []});
@@ -30,21 +30,27 @@ class LoanListCard extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        leading: Icon(data.icon, color: AppColors.secondary),
+        leading: Icon(
+  _iconForStatus(data.status),
+  color: AppColors.secondary,
+),
+
         title: Text(
-          data.borrower,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-            color: AppColors.primary,
-          ),
-        ),
+  data.borrowerName,
+  style: const TextStyle(
+    fontWeight: FontWeight.w600,
+    fontSize: 15,
+    color: AppColors.primary,
+  ),
+),
+
         subtitle: Text(
-          '${_formatDate(data.startDate)} • ${data.status}',
-          style: const TextStyle(fontSize: 12),
-        ),
+  '${_formatDate(data.startDate)} • ${data.status.name}',
+  style: const TextStyle(fontSize: 12),
+),
+
         children: [
-          _row('Borrower', data.borrower),
+          _row('Borrower', data.borrowerName),
           _row('Start Date', _formatDate(data.startDate)),
           _row('End Date', _formatDate(data.endDate)),
 
@@ -56,30 +62,28 @@ class LoanListCard extends StatelessWidget {
           const SizedBox(height: 6),
 
           Column(
-            children: data.items.map((item) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+  children: data.details.map((detail) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              detail.itemName ?? 'Unknown Item',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
+        ],
+      ),
+    );
+  }).toList(),
+),
+
 
           const SizedBox(height: 16),
 
@@ -120,6 +124,25 @@ class LoanListCard extends StatelessWidget {
       ),
     );
   }
+
+IconData _iconForStatus(LoanStatus status) {
+  switch (status) {
+    case LoanStatus.pending:
+      return Icons.access_time;
+    case LoanStatus.approved:
+      return Icons.calendar_month;
+    case LoanStatus.rejected:
+      return Icons.close;
+    case LoanStatus.borrowed:
+      return Icons.outbond;
+    case LoanStatus.returning:
+      return Icons.keyboard_return;
+    case LoanStatus.penalty:
+      return Icons.attach_money;
+    case LoanStatus.returned:
+      return Icons.check_circle_outline;
+  }
+}
 
   Widget _row(String label, String value) {
     return Padding(

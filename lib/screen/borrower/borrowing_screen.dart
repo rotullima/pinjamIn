@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:pinjamln/constants/app_colors.dart';
 import 'package:pinjamln/widgets/app_header.dart';
 import 'package:pinjamln/widgets/app_search_field.dart';
-import 'package:pinjamln/dummy/tools/tools_dummy.dart';
 import '../../services/auth/user_session.dart';
 import '../../widgets/app_drawer.dart';
 import 'loan_summary_screen.dart';
+import '../../models/tools/tool_model.dart';
+import '../../services/tools/tool_borrower_service.dart';
 
 class ToolBorrowScreen extends StatefulWidget {
   const ToolBorrowScreen({super.key});
@@ -17,15 +18,15 @@ class ToolBorrowScreen extends StatefulWidget {
 class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
   bool isOpen = false;
   final TextEditingController _searchCtrl = TextEditingController();
-  late List<ToolDummy> tools;
+  late Future<List<ToolModel>> _toolsFuture;
   String query = '';
 
-  final List<ToolDummy> _cart = [];
-
+  final List<ToolModel> _cart = [];
   @override
   void initState() {
     super.initState();
-    tools = List.from(toolDummies);
+    _toolsFuture = ToolBorrowService().fetchAvailableTools();
+
     _searchCtrl.addListener(() {
       setState(() {
         query = _searchCtrl.text.toLowerCase().trim();
@@ -35,15 +36,15 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
-  void _addToCart(ToolDummy tool) {
-    if (tool.stock <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${tool.name} sedang kosong (stok 0)')),
-      );
+  void _addToCart(ToolModel tool) {
+    if (tool.stockAvailable <= 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${tool.name} sedang kosong')));
       return;
     }
 
-    final exists = _cart.any((t) => t.id == tool.id);
+    final exists = _cart.any((t) => t.itemId == tool.itemId);
     if (exists) {
       ScaffoldMessenger.of(
         context,
@@ -69,11 +70,6 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
       return const Scaffold(body: Center(child: Text('Acces denied')));
     }
 
-    final filtered = tools.where((t) {
-      return t.name.toLowerCase().contains(query) ||
-          t.category.toLowerCase().contains(query);
-    }).toList();
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -94,12 +90,36 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                 const SizedBox(height: 16),
 
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final tool = filtered[index];
-                      return _toolCard(tool);
+                  child: FutureBuilder<List<ToolModel>>(
+                    future: _toolsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(child: Text(snapshot.error.toString()));
+                      }
+
+                      final tools = snapshot.data!;
+                      final filtered = tools.where((t) {
+                        return t.name.toLowerCase().contains(query) ||
+                            t.category.toLowerCase().contains(query);
+                      }).toList();
+
+                      if (filtered.isEmpty) {
+                        return const Center(
+                          child: Text('Alat tidak ditemukan'),
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          return _toolCard(filtered[index]);
+                        },
+                      );
                     },
                   ),
                 ),
@@ -153,8 +173,8 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
     );
   }
 
-  Widget _toolCard(ToolDummy tool) {
-    final bool outOfStock = tool.stock <= 0;
+  Widget _toolCard(ToolModel tool) {
+    final bool outOfStock = tool.stockAvailable <= 0;
 
     return GestureDetector(
       onTap: outOfStock ? null : () => _addToCart(tool),
@@ -184,7 +204,11 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
-                    image: AssetImage(tool.imagePath),
+                    image: tool.imagePath != null
+                        ? NetworkImage(tool.imagePath!)
+                        : const AssetImage('assets/images/no_image.png')
+                              as ImageProvider,
+
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -197,7 +221,6 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                     Text(
                       tool.name,
                       style: TextStyle(
-                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: outOfStock ? Colors.grey : null,
                       ),
@@ -212,9 +235,8 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Available: ${tool.stock}',
+                      'Available: ${tool.stockAvailable}',
                       style: TextStyle(
-                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: outOfStock ? Colors.red : AppColors.primary,
                       ),
@@ -222,17 +244,6 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                   ],
                 ),
               ),
-              if (outOfStock)
-                const Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: Text(
-                    'in repair',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),

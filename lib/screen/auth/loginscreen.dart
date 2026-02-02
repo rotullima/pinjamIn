@@ -14,6 +14,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
   final AuthService _authService = AuthService();
+  bool _isValidEmail(String email) {
+  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  return regex.hasMatch(email);
+}
+
 
   @override
   void dispose() {
@@ -90,10 +95,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+  final email = _emailCtrl.text.trim();
+  final password = _passwordCtrl.text.trim();
+
+  if (email.isEmpty || password.isEmpty) {
+    _showError('Email dan password wajib diisi');
+    return;
+  }
+
+  if (!_isValidEmail(email)) {
+    _showError('Format email tidak valid');
+    return;
+  }
+
   try {
     await _authService.signIn(
-      email: _emailCtrl.text.trim(),
-      password: _passwordCtrl.text.trim(),
+      email: email,
+      password: password,
     );
 
     if (!mounted) return;
@@ -104,15 +122,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   } catch (e) {
     if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.toString()),
-        backgroundColor: Colors.red,
-      ),
-    );
+    _showError(e.toString().replaceAll('Exception: ', ''));
   }
 }
+
+void _showError(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    ),
+  );
+}
+
 
   Widget _buildInputField({
     required IconData icon,
@@ -140,3 +162,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

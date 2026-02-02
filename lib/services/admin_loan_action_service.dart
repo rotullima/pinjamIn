@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../services/auth/user_session.dart';
 
-class LoanService {
+class LoanActionService {
   static final SupabaseClient _client = SupabaseConfig.client;
 
   static Future<List<LoanModel>> fetchLoans({

@@ -40,7 +40,7 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
   Future<void> _loadAvailableItems() async {
     setState(() => isLoadingItems = true);
     try {
-      final items = await LoanService.fetchAvailableItems();
+      final items = await LoanActionService.fetchAvailableItems();
       setState(() {
         availableItems = items.where((item) {
           return !selectedDetails.any((d) => d.itemId == item.id);
@@ -81,7 +81,7 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
 
   Future<void> _removeItem(LoanDetailModel detail) async {
     try {
-      await LoanService.removeItemFromLoan(detail.loanDetailId!);
+      await LoanActionService.removeItemFromLoan(detail.loanDetailId!);
       setState(() {
         selectedDetails.remove(detail);
       });
@@ -94,7 +94,7 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
 
   Future<void> _addItem(ItemModel item) async {
     try {
-      await LoanService.addItemToLoan(widget.loan.loanId, item.id);
+      await LoanActionService.addItemToLoan(widget.loan.loanId, item.id);
       setState(() {
         selectedDetails.add(
           LoanDetailModel(
@@ -116,7 +116,7 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
     try {
       if (_startDate != widget.loan.startDate ||
           _endDate != widget.loan.endDate) {
-        await LoanService.updateLoanDates(
+        await LoanActionService.updateLoanDates(
           widget.loan.loanId,
           startDate: _startDate != widget.loan.startDate ? _startDate : null,
           endDate: _endDate != widget.loan.endDate ? _endDate : null,

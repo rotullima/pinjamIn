@@ -17,8 +17,8 @@ class UserService {
       Uri.parse(baseUrl),
       headers: {
         'Content-Type': 'application/json',
-        'apikey': apiKey, // opsional
-        'Authorization': 'Bearer $apiKey', // JWT user login
+        'apikey': apiKey,
+        'Authorization': 'Bearer $apiKey', 
       },
     );
     if (res.statusCode != 200) {

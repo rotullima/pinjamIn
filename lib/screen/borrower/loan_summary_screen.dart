@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:pinjamln/constants/app_colors.dart';
-import 'package:pinjamln/dummy/tools/tools_dummy.dart';
 import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
 import '../../widgets/app_header.dart';
 import '../../services/auth/user_session.dart';
+import '../../models/tools/tool_model.dart';
+import '../../services/loan_service.dart';
 
 class LoanSummaryScreen extends StatefulWidget {
-  final List<ToolDummy> cart;
+  final List<ToolModel> cart;
 
   const LoanSummaryScreen({super.key, required this.cart});
 
@@ -76,35 +77,58 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
     }
   }
 
-  void _submitLoan() {
-    if (widget.cart.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
-      return;
-    }
-    if (_startDate == null || _endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('input start date & end date first')),
-      );
-      return;
-    }
-    if (_endDate!.isBefore(_startDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('end date must not be before the borrowing date'),
-        ),
-      );
-      return;
-    }
-
+  void _submitLoan() async {
+  // ===== VALIDATOR (JANGAN DIHAPUS) =====
+  if (widget.cart.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Loan application successfully submitted!')),
+      const SnackBar(content: Text('Cart is empty')),
+    );
+    return;
+  }
+
+  if (_startDate == null || _endDate == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('input start date & end date first')),
+    );
+    return;
+  }
+
+  if (_endDate!.isBefore(_startDate!)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('end date must not be before the borrowing date'),
+      ),
+    );
+    return;
+  }
+  // ===== END VALIDATOR =====
+
+  try {
+    // 🔥 SUBMIT KE DATABASE
+    await LoanService().submitLoan(
+      borrowerId: UserSession.id, // pastikan ini ada
+      startDate: _startDate!,
+      endDate: _endDate!,
+      items: widget.cart,
+    );
+
+    // ✅ SUCCESS
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Loan application successfully submitted!'),
+      ),
     );
 
     widget.cart.clear();
     Navigator.pop(context, true);
+  } catch (e) {
+    // ❌ ERROR HANDLING
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to submit loan: $e')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -152,12 +176,19 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
                           child: ListTile(
                             leading: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                tool.imagePath,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              ),
+                              child: tool.imagePath != null
+                                  ? Image.network(
+                                      tool.imagePath!,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.asset(
+                                      'assets/images/no_image.png',
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                             title: Text(
                               tool.name,

@@ -167,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         itemBuilder: (context, index) {
                                           final loan = _displayedLoans[index];
                                           return LoanListCard(
-                                            data: _adaptToDummy(loan),
+                                            data: loan,
                                           );
                                         },
                                       ),

@@ -17,7 +17,7 @@ class LoanModel {
   final String? officerId;
   final DateTime startDate;
   final DateTime endDate;
-  final LoanStatus status;
+  LoanStatus status;
   final DateTime? returnDate;
   final double? lateFine;
   final String? note;

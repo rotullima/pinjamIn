@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/tools/category_model.dart';
 import '../../services/tools/category_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../services/tools/tool_service.dart';
+import '../../services/tools/tool_admin_service.dart';
 
 class ToolFormSheet extends StatefulWidget {
   final ToolModel? tool;
@@ -364,7 +364,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
     }
 
     if (widget.tool == null) {
-      await ToolService().createTool(
+      await ToolAdminService().createTool(
         name: nameCtrl.text,
         categoryId: selectedCategory!.id,
         description: null,
@@ -373,7 +373,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
         statusItem: selectedCondition,
       );
     } else {
-      await ToolService().updateTool(
+      await ToolAdminService().updateTool(
         itemId: widget.tool!.itemId,
         name: nameCtrl.text,
         categoryId: selectedCategory!.id,

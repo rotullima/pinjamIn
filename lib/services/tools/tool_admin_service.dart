@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/tools/tool_model.dart';
 
-class ToolService {
+class ToolAdminService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<List<ToolModel>> fetchTools() async {

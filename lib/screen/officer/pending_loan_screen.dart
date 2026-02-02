@@ -5,9 +5,10 @@ import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
 import '../../widgets/confirm_snackbar.dart';
-import '../../dummy/loan_dummy.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
+import '../../models/loan_model.dart';
+import '../../services/officer_loan_service.dart';
 
 class PendingLoanScreen extends StatefulWidget {
   const PendingLoanScreen({super.key});
@@ -20,6 +21,9 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
   bool isOpen = false;
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+  bool _isLoading = true;
+
+  List<LoanModel> _loans = [];
 
   @override
   void initState() {
@@ -29,16 +33,31 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
         _query = _searchCtrl.text.toLowerCase().trim();
       });
     });
+    _fetchLoans();
   }
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
-  List<LoanDummy> get _pendingLoans {
-    return loanDummies.where((l) {
-      final matchStatus = l.status == 'pending';
-      final matchSearch =
-          _query.isEmpty || l.borrower.toLowerCase().contains(_query);
-      return matchStatus && matchSearch;
+  Future<void> _fetchLoans() async {
+    setState(() => _isLoading = true);
+    try {
+      final loans = await OfficerLoanService.fetchAllLoans();
+      setState(() {
+        _loans = loans
+            .where((l) => l.status == LoanStatus.pending)
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      debugPrint('Failed to fetch loans: $e');
+    }
+  }
+
+  List<LoanModel> get _filteredLoans {
+    return _loans.where((loan) {
+      return _query.isEmpty ||
+          loan.borrowerName.toLowerCase().contains(_query);
     }).toList();
   }
 
@@ -47,6 +66,7 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
     if (UserSession.role != 'officer') {
       return const Scaffold(body: Center(child: Text('Access denied')));
     }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -62,40 +82,77 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
                   ),
                 ),
 
-                SearchField(controller: _searchCtrl),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SearchField(controller: _searchCtrl),
+                ),
 
                 const SizedBox(height: 16),
 
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _pendingLoans.length,
-                    itemBuilder: (context, index) {
-                      final loan = _pendingLoans[index];
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredLoans.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No pending loans',
+                                style: TextStyle(
+                                    color: Colors.grey, fontSize: 16),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: _filteredLoans.length,
+                              itemBuilder: (context, index) {
+                                final loan = _filteredLoans[index];
 
-                      return LoanListCard(
-                        data: loan,
-                        actions: [
-                          LoanAction(
-                            type: LoanActionType.reject,
-                            label: 'Reject',
-                            onTap: () {
-                              showConfirmSnackBar(context, 'Loan rejected!');
-                              setState(() => loanDummies.remove(loan));
-                            },
-                          ),
-                          LoanAction(
-                            type: LoanActionType.confirm,
-                            label: 'Confirm',
-                            onTap: () {
-                              showConfirmSnackBar(context, 'Loan confirmed!');
-                              setState(() => loanDummies.remove(loan));
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                                return LoanListCard(
+                                  data: loan,
+                                  actions: [
+                                    LoanAction(
+                                      type: LoanActionType.reject,
+                                      label: 'Reject',
+                                      onTap: () async {
+                                        try {
+                                          await OfficerLoanService().updateLoanStatus(
+                                            loanId: loan.loanId,
+                                            newStatus: LoanStatus.rejected,
+                                          );
+
+                                          showConfirmSnackBar(
+                                              context, 'Loan rejected!');
+
+                                          setState(() => _loans.remove(loan));
+                                        } catch (e) {
+                                          showConfirmSnackBar(
+                                              context, 'Failed: $e');
+                                        }
+                                      },
+                                    ),
+                                    LoanAction(
+                                      type: LoanActionType.confirm,
+                                      label: 'Confirm',
+                                      onTap: () async {
+                                        try {
+                                          await OfficerLoanService().updateLoanStatus(
+                                            loanId: loan.loanId,
+                                            newStatus: LoanStatus.approved,
+                                          );
+
+                                          showConfirmSnackBar(
+                                              context, 'Loan approved!');
+
+                                          setState(() => _loans.remove(loan));
+                                        } catch (e) {
+                                          showConfirmSnackBar(
+                                              context, 'Failed: $e');
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
                 ),
               ],
             ),
@@ -109,5 +166,11 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 }

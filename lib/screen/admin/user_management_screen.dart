@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
-import 'package:pinjamln/widgets/confirm_activate_dialog.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
-import '../../models/user_model.dart'; // <-- pastikan import ini
+import '../../models/user_model.dart'; 
 import '../../widgets/user_form_sheet.dart';
 import '../../services/auth/user_session.dart';
-import '../../services/auth/user_service.dart'; // <-- service create user
+import '../../services/auth/user_service.dart'; 
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -28,20 +26,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   late UserService _userService;
 
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  users = [];
-  _userService = UserService(); // langsung pakai default baseUrl & apiKey dari env
+    users = [];
+    _userService =
+        UserService(); // langsung pakai default baseUrl & apiKey dari env
 
-  _fetchUsers();
+    _fetchUsers();
 
-  _searchController.addListener(() {
-    setState(() {
-      _searchQuery = _searchController.text.toLowerCase().trim();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase().trim();
+      });
     });
-  });
-}
+  }
 
   @override
   void dispose() {
@@ -50,26 +49,26 @@ void initState() {
   }
 
   Future<void> _fetchUsers() async {
-  setState(() => _isLoading = true);
-  try {
-    final fetchedUsers = await _userService.fetchUsers();
-    setState(() {
-      users = fetchedUsers;
-      _isLoading = false;
-    });
-  } catch (e) {
-    print('Error fetch users: $e');
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat daftar user: $e')),
-      );
+    setState(() => _isLoading = true);
+    try {
+      final fetchedUsers = await _userService.fetchUsers();
+      setState(() {
+        users = fetchedUsers;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetch users: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat daftar user: $e')));
+      }
+      setState(() {
+        users = [];
+        _isLoading = false;
+      });
     }
-    setState(() {
-      users = [];
-      _isLoading = false;
-    });
   }
-}
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
@@ -79,19 +78,19 @@ void initState() {
       return const Scaffold(body: Center(child: Text('Access denied')));
     }
 
-    final filteredUsers = users.where((user) {
-      final name = user.name ?? '';
-      final role = user.role ?? '';
-      return name.toLowerCase().contains(_searchQuery) ||
-          role.toLowerCase().contains(_searchQuery);
-    }).toList()
-      ..sort((a, b) {
-        // Aktif user di atas, non-aktif di bawah
-        if (a.isActive && !b.isActive) return -1;
-        if (!a.isActive && b.isActive) return 1;
-        // Kalau sama-sama aktif/non-aktif, urut berdasarkan nama
-        return (a.name ?? '').compareTo(b.name ?? '');
-      });
+    final filteredUsers =
+        users.where((user) {
+          final name = user.name ?? '';
+          final role = user.role ?? '';
+          return name.toLowerCase().contains(_searchQuery) ||
+              role.toLowerCase().contains(_searchQuery);
+        }).toList()..sort((a, b) {
+          // Aktif user di atas, non-aktif di bawah
+          if (a.isActive && !b.isActive) return -1;
+          if (!a.isActive && b.isActive) return 1;
+          // Kalau sama-sama aktif/non-aktif, urut berdasarkan nama
+          return (a.name ?? '').compareTo(b.name ?? '');
+        });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -196,7 +195,7 @@ void initState() {
                                               'Status: Nonaktif',
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.orange,
+                                                color: AppColors.secondary,
                                                 fontStyle: FontStyle.italic,
                                               ),
                                             ),
@@ -214,17 +213,20 @@ void initState() {
                                         if (user.isActive)
                                           IconButton(
                                             icon: const Icon(
-                                              Icons.delete,
+                                              Icons.person_off,
                                               color: AppColors.secondary,
                                             ),
                                             onPressed: () {
                                               showDialog(
                                                 context: context,
                                                 builder: (_) =>
-                                                    ConfirmDeleteDialog(
+                                                    _ConfirmStatusDialog(
+                                                      title: 'Deactivate',
                                                       message:
-                                                          'Yakin nonaktifkan user ini?',
-                                                      onConfirm: () async => _deleteUser(user),
+                                                          'Sure you want to deactive this user?',
+                                                      confirmText: 'Deactivate',
+                                                      onConfirm: () async =>
+                                                          _deactiveUser(user),
                                                     ),
                                               );
                                             },
@@ -239,10 +241,13 @@ void initState() {
                                               showDialog(
                                                 context: context,
                                                 builder: (_) =>
-                                                    ConfirmActivateDialog(
+                                                    _ConfirmStatusDialog(
+                                                      title: 'Activate',
                                                       message:
-                                                          'Yakin aktifkan user ini kembali?',
-                                                      onConfirm: () async => _activateUser(user),
+                                                          'Sure you want to activate this user?',
+                                                      confirmText: 'Activate',
+                                                      onConfirm: () async =>
+                                                          _activateUser(user),
                                                     ),
                                               );
                                             },
@@ -273,19 +278,20 @@ void initState() {
   Future<void> _activateUser(UserModel user) async {
     try {
       await _userService.activateUser(user.id);
-      
+
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User ${user.name} berhasil diaktifkan kembali')),
+        SnackBar(
+          content: Text('User ${user.name} berhasil diaktifkan kembali'),
+        ),
       );
-      
+
       // Refresh user list to reflect activation
       await _fetchUsers();
-      
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal aktifkan user: $e'),
@@ -295,26 +301,25 @@ void initState() {
     }
   }
 
-  Future<void> _deleteUser(UserModel user) async {
+  Future<void> _deactiveUser(UserModel user) async {
     try {
       await _userService.deleteUser(user.id);
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         users.removeWhere((u) => u.id == user.id);
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('User ${user.name} berhasil dinonaktifkan')),
       );
-      
+
       // Refresh user list to reflect deletion
       await _fetchUsers();
-      
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal hapus user: $e'),
@@ -361,7 +366,7 @@ void initState() {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User berhasil diupdate!')),
         );
-        
+
         // Refresh user list to show updated data
         await _fetchUsers();
       } else {
@@ -390,7 +395,7 @@ void initState() {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('User berhasil dibuat! ID: ${newUser.id}')),
         );
-        
+
         // Refresh user list to show new user
         await _fetchUsers();
       }
@@ -402,5 +407,61 @@ void initState() {
         ),
       );
     }
+  }
+}
+
+class _ConfirmStatusDialog extends StatelessWidget {
+  final String title;
+  final String message;
+  final String confirmText;
+  final VoidCallback onConfirm;
+
+  const _ConfirmStatusDialog({
+    required this.title,
+    required this.message,
+    required this.confirmText,
+    required this.onConfirm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      content: Text(message, style: const TextStyle(color: AppColors.primary)),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: AppColors.primary),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            onConfirm();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.secondary, // SAMA PERSIS
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            confirmText,
+            style: const TextStyle(color: AppColors.background),
+          ),
+        ),
+      ],
+    );
   }
 }
