@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
+import 'package:pinjamln/widgets/notifications/confirm_delete_dialog.dart';
 import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
@@ -8,7 +8,7 @@ import '../../services/auth/user_session.dart';
 import '../../widgets/app_search_field.dart';
 import '../../services/tools/category_service.dart';
 import '../../models/tools/category_model.dart';
-import '../../widgets/app_toast.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});

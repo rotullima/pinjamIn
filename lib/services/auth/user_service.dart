@@ -8,7 +8,6 @@ class UserService {
   final String baseUrl = '${dotenv.env['SUPABASE_URL']}/functions/v1/crud-user';
   final String apiKey = dotenv.env['SUPABASE_ANON_KEY']!;
 
-  /// GET all users
   Future<List<UserModel>> fetchUsers() async {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     if (token == null) throw Exception('User not logged in');
@@ -32,7 +31,6 @@ class UserService {
     return users;
   }
 
-  /// POST create user
   Future<UserModel> createUser({
     required String email,
     required String password,
@@ -44,7 +42,7 @@ class UserService {
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
+        'Authorization': 'Bearer $apiKey', 
       },
       body: jsonEncode({
         'email': email,
@@ -62,7 +60,6 @@ class UserService {
     return UserModel.fromJson(userData);
   }
 
-  /// PUT update user
   Future<UserModel> updateUser({
     required String id,
     String? name,
@@ -74,7 +71,7 @@ class UserService {
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
+        'Authorization': 'Bearer $apiKey', 
       },
       body: jsonEncode({
         'id': id,
@@ -92,14 +89,13 @@ class UserService {
     return UserModel.fromJson(userData);
   }
 
-  /// Activate user (set is_active = true)
   Future<UserModel> activateUser(String id) async {
     final res = await http.put(
       Uri.parse(baseUrl),
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
+        'Authorization': 'Bearer $apiKey', 
       },
       body: jsonEncode({
         'id': id,
@@ -115,14 +111,13 @@ class UserService {
     return UserModel.fromJson(userData);
   }
 
-  /// DELETE (soft) user
   Future<void> deleteUser(String id) async {
     final res = await http.delete(
       Uri.parse(baseUrl),
       headers: {
         'Content-Type': 'application/json',
         'apikey': apiKey,
-        'Authorization': 'Bearer $apiKey', // Use anon_key like GET
+        'Authorization': 'Bearer $apiKey', 
       },
       body: jsonEncode({'id': id}),
     );

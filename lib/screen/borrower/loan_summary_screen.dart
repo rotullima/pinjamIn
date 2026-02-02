@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:pinjamln/constants/app_colors.dart';
-import 'package:pinjamln/widgets/confirm_delete_dialog.dart';
+import 'package:pinjamln/widgets/notifications/confirm_delete_dialog.dart';
 import '../../widgets/app_header.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/tools/tool_model.dart';
-import '../../services/loan_service.dart';
+import '../../services/borrower/borrrowing_service.dart';
 
 class LoanSummaryScreen extends StatefulWidget {
   final List<ToolModel> cart;
@@ -78,57 +78,51 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
   }
 
   void _submitLoan() async {
-  // ===== VALIDATOR (JANGAN DIHAPUS) =====
-  if (widget.cart.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cart is empty')),
-    );
-    return;
+    if (widget.cart.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
+      return;
+    }
+
+    if (_startDate == null || _endDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('input start date & end date first')),
+      );
+      return;
+    }
+
+    if (_endDate!.isBefore(_startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('end date must not be before the borrowing date'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await LoanService().submitLoan(
+        borrowerId: UserSession.id,
+        startDate: _startDate!,
+        endDate: _endDate!,
+        items: widget.cart,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Loan application successfully submitted!'),
+        ),
+      );
+
+      widget.cart.clear();
+      Navigator.pop(context, true);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to submit loan: $e')));
+    }
   }
-
-  if (_startDate == null || _endDate == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('input start date & end date first')),
-    );
-    return;
-  }
-
-  if (_endDate!.isBefore(_startDate!)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('end date must not be before the borrowing date'),
-      ),
-    );
-    return;
-  }
-  // ===== END VALIDATOR =====
-
-  try {
-    // 🔥 SUBMIT KE DATABASE
-    await LoanService().submitLoan(
-      borrowerId: UserSession.id, // pastikan ini ada
-      startDate: _startDate!,
-      endDate: _endDate!,
-      items: widget.cart,
-    );
-
-    // ✅ SUCCESS
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Loan application successfully submitted!'),
-      ),
-    );
-
-    widget.cart.clear();
-    Navigator.pop(context, true);
-  } catch (e) {
-    // ❌ ERROR HANDLING
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to submit loan: $e')),
-    );
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {

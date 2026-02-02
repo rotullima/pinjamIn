@@ -5,7 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
-import '../../widgets/confirm_delete_dialog.dart';
+import '../../widgets/notifications/confirm_delete_dialog.dart';
 import '../../services/auth/user_session.dart';
 import '../../widgets/tools/tool_form_sheet.dart';
 import '../../services/tools/tool_admin_service.dart';

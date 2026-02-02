@@ -14,7 +14,6 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Handle both flat structure and nested raw_user_meta_data structure
     final metaData = json['raw_user_meta_data'] as Map<String, dynamic>?;
     
     return UserModel(

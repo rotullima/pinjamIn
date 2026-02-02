@@ -4,11 +4,11 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/confirm_snackbar.dart';
+import '../../widgets/notifications/confirm_snackbar.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
-import '../../services/officer_loan_service.dart';
+import '../../services/officer/officer_loan_service.dart';
 
 class ApprovedLoanScreen extends StatefulWidget {
   const ApprovedLoanScreen({super.key});
@@ -111,10 +111,9 @@ class _ApprovedLoanScreenState extends State<ApprovedLoanScreen> {
                                     label: 'Pick Up',
                                     onTap: () async {
                                       try {
-                                        await _service.approveLoan(loan.loanId);
+                                        await _service.pickupLoan(loan.loanId);
 
 
-                                        // update lokal supaya UI langsung berubah
                                         setState(() {
                                           final i = _loans.indexOf(loan);
                                           _loans[i] = LoanModel(

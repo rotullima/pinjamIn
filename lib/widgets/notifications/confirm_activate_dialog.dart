@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../../constants/app_colors.dart';
 
-class ConfirmDeleteDialog extends StatelessWidget {
+class ConfirmActivateDialog extends StatelessWidget {
   final String title;
   final String message;
   final VoidCallback onConfirm;
 
-  const ConfirmDeleteDialog({
+  const ConfirmActivateDialog({
     super.key,
-    this.title = 'Delete',
-    this.message = 'Are you sure you want to delete this item?',
+    this.title = 'Activate',
+    this.message = 'Are you sure you want to activate this item?',
     required this.onConfirm,
   });
 
@@ -41,13 +41,13 @@ class ConfirmDeleteDialog extends StatelessWidget {
             onConfirm();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondary,
+            backgroundColor: Colors.green,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: const Text(
-            'Delete',
+            'Activate',
             style: TextStyle(color: AppColors.background),
           ),
         ),

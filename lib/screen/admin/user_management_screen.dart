@@ -20,9 +20,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   late List<UserModel> users;
-  bool _isLoading = true; // untuk loading state
+  bool _isLoading = true; 
 
-  // Service
   late UserService _userService;
 
   @override
@@ -31,7 +30,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     users = [];
     _userService =
-        UserService(); // langsung pakai default baseUrl & apiKey dari env
+        UserService(); 
 
     _fetchUsers();
 
@@ -85,10 +84,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           return name.toLowerCase().contains(_searchQuery) ||
               role.toLowerCase().contains(_searchQuery);
         }).toList()..sort((a, b) {
-          // Aktif user di atas, non-aktif di bawah
           if (a.isActive && !b.isActive) return -1;
           if (!a.isActive && b.isActive) return 1;
-          // Kalau sama-sama aktif/non-aktif, urut berdasarkan nama
           return (a.name ?? '').compareTo(b.name ?? '');
         });
 
@@ -287,7 +284,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         ),
       );
 
-      // Refresh user list to reflect activation
       await _fetchUsers();
     } catch (e) {
       if (!mounted) return;
@@ -315,7 +311,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         SnackBar(content: Text('User ${user.name} berhasil dinonaktifkan')),
       );
 
-      // Refresh user list to reflect deletion
       await _fetchUsers();
     } catch (e) {
       if (!mounted) return;
@@ -341,7 +336,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     try {
       if (user != null) {
-        // Update existing user
         final updatedUser = await _userService.updateUser(
           id: user.id,
           name: result['name'] as String,
@@ -349,7 +343,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           email: result['email'] as String,
         );
 
-        // Update in list
         setState(() {
           final index = users.indexWhere((u) => u.id == user.id);
           if (index != -1) {
@@ -367,10 +360,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           const SnackBar(content: Text('User berhasil diupdate!')),
         );
 
-        // Refresh user list to show updated data
         await _fetchUsers();
       } else {
-        // Add new user
         final newUser = await _userService.createUser(
           email: result['email'] as String,
           password: result['password'] as String,
@@ -378,7 +369,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           role: result['role'] as String,
         );
 
-        // Add to list
         setState(
           () => users.insert(
             0,
@@ -396,7 +386,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           SnackBar(content: Text('User berhasil dibuat! ID: ${newUser.id}')),
         );
 
-        // Refresh user list to show new user
         await _fetchUsers();
       }
     } catch (e) {
@@ -451,7 +440,7 @@ class _ConfirmStatusDialog extends StatelessWidget {
             onConfirm();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondary, // SAMA PERSIS
+            backgroundColor: AppColors.secondary, 
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

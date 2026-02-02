@@ -7,7 +7,7 @@ import '../../widgets/loan_card.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
-import '../../services/loan_list_service.dart';
+import '../../services/borrower/loan_list_service.dart';
 
 class LoanListScreen extends StatefulWidget {
   const LoanListScreen({super.key});
@@ -199,19 +199,16 @@ class _LoanListScreenState extends State<LoanListScreen> {
   type: LoanActionType.returning,
   label: 'Return',
   onTap: () async {
-    // 1️⃣ Update status lokal supaya UI langsung berubah
     setState(() {
       loan.status = LoanStatus.returning;
     });
 
-    // 2️⃣ Update status di backend Supabase
     try {
       await LoanListService.updateLoanStatus(
         loanId: loan.loanId,
         newStatus: LoanStatus.returning,
       );
 
-      // 3️⃣ Tampilkan snackbar hanya jika widget masih aktif
       if (!mounted) return;
       _scaffoldMessengerKey.currentState?.showSnackBar(
   SnackBar(content: Text('Loan status updated to returning')),
@@ -222,7 +219,6 @@ class _LoanListScreenState extends State<LoanListScreen> {
   SnackBar(content: Text('Failed to update status: $e')),
 
       );
-      // Jika gagal update backend, rollback status lokal
       setState(() {
         loan.status = LoanStatus.borrowed;
       });

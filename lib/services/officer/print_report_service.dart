@@ -160,7 +160,7 @@ class PrintReportService {
                     pw.SizedBox(height: 12),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           );
         },

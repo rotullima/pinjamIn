@@ -49,12 +49,6 @@ class DashboardService {
           subtitle: '',
         ),
         DashboardStatModel(title: 'Penalty', value: penaltyCount, subtitle: ''),
-        DashboardStatModel(
-          title: 'Borrowed',
-          value: borrowedCount,
-          subtitle: '',
-        ),
-        DashboardStatModel(title: 'Penalty', value: penaltyCount, subtitle: ''),
       ]);
     } else {
       var query = _client.from('loans').select('loan_id, status_loan');

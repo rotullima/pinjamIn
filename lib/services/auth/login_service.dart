@@ -35,7 +35,6 @@ class AuthService {
       name: profile['name'],
     );
   } on AuthException catch (e) {
-    // Error resmi dari Supabase Auth
     if (e.message.contains('Invalid login credentials')) {
       throw Exception('Email atau password salah');
     }

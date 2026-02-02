@@ -9,8 +9,7 @@ import '../widgets/loan_card.dart';
 import '../services/auth/user_session.dart';
 import '../services/dashboard_service.dart';
 import '../models/loan_model.dart';
-import '../dummy/loan_dummy.dart';
-import '../services/print_report_service.dart';
+import '../services/officer/print_report_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -166,9 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         itemCount: _displayedLoans.length,
                                         itemBuilder: (context, index) {
                                           final loan = _displayedLoans[index];
-                                          return LoanListCard(
-                                            data: loan,
-                                          );
+                                          return LoanListCard(data: loan);
                                         },
                                       ),
                               ),
@@ -220,27 +217,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         return Icons.info_outline;
     }
-  }
-
-  LoanDummy _adaptToDummy(LoanModel loan) {
-    final items = loan.details.isNotEmpty
-        ? loan.details
-              .map(
-                (d) => LoanItemDummy(name: d.itemName ?? 'Item #${d.itemId}'),
-              )
-              .toList()
-        : [LoanItemDummy(name: 'No items')];
-
-    return LoanDummy(
-      borrower: loan.borrowerName,
-      startDate: loan.startDate,
-      endDate: loan.endDate,
-      items: items,
-      status: loan.status.toString().split('.').last,
-      conditionNote: null,
-      fineAmount: loan.lateFine?.toInt(),
-      penaltyDays: null,
-      isPaid: null,
-    );
   }
 }

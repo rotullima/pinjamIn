@@ -7,12 +7,11 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/confirm_snackbar.dart';
-import '../../dummy/loan_dummy.dart';
+import '../../widgets/notifications/confirm_snackbar.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
-import '../../services/admin_loan_action_service.dart';
+import '../../services/admin/admin_loan_action_service.dart';
 
 class AdminLoanListScreen extends StatefulWidget {
   const AdminLoanListScreen({super.key});
@@ -200,28 +199,6 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  LoanDummy _adaptToDummy(LoanModel loan) {
-    final List<LoanItemDummy> adaptedItems = loan.details.map((detail) {
-      return LoanItemDummy(name: detail.itemName ?? 'Item #${detail.itemId}');
-    }).toList();
-
-    if (adaptedItems.isEmpty) {
-      adaptedItems.add(LoanItemDummy(name: 'No items'));
-    }
-
-    return LoanDummy(
-      borrower: loan.borrowerName,
-      startDate: loan.startDate,
-      endDate: loan.endDate,
-      items: adaptedItems,
-      status: loan.status.toString().split('.').last,
-      conditionNote: null,
-      fineAmount: loan.lateFine?.toInt(),
-      penaltyDays: null,
-      isPaid: null,
     );
   }
 

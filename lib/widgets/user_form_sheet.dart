@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
-import '../models/user_model.dart'; // <-- import AppUser
+import '../models/user_model.dart'; 
 
 class UserFormSheet extends StatefulWidget {
-  final UserModel? user; // <-- Ganti ke AppUser
+  final UserModel? user; 
 
   const UserFormSheet({super.key, this.user});
 
@@ -15,16 +15,14 @@ class _UserFormSheetState extends State<UserFormSheet> {
   late TextEditingController nameCtrl;
   late TextEditingController emailCtrl;
   late TextEditingController passwordCtrl;
-  String selectedRole = 'officer'; // Default untuk add new (bukan 'admin')
+  String selectedRole = 'officer'; 
 
   @override
   void initState() {
     super.initState();
     nameCtrl = TextEditingController(text: widget.user?.name ?? '');
     emailCtrl = TextEditingController(text: widget.user?.email ?? '');
-    passwordCtrl = TextEditingController(); // Password kosong kalau edit (tidak bisa ubah lewat form ini)
-
-    // Pre-fill role kalau edit, pastikan nilai valid
+    passwordCtrl = TextEditingController();
     final userRole = widget.user?.role;
     selectedRole = (userRole == 'admin' || userRole == 'officer' || userRole == 'borrower') 
         ? userRole! 
@@ -72,13 +70,11 @@ class _UserFormSheetState extends State<UserFormSheet> {
 
               _roleDropdown(),
 
-              // Email: bisa diubah untuk edit
               _input(
                 'Email',
                 emailCtrl,
               ),
 
-              // Password: hanya wajib untuk add new, kosong/hidden kalau edit
               if (!isEdit)
                 _input('Password', passwordCtrl, obscureText: true),
 
@@ -100,7 +96,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
                       label: isEdit ? 'Update' : 'Done',
                       icon: Icons.check,
                       onTap: () {
-                        // Validasi minimal
                         if (nameCtrl.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Nama wajib diisi!')),
@@ -108,7 +103,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
                           return;
                         }
 
-                        // Validasi email
                         final email = emailCtrl.text.trim();
                         if (email.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +111,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
                           return;
                         }
 
-                        // Validasi format email
                         if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Format email tidak valid!')),
@@ -125,7 +118,6 @@ class _UserFormSheetState extends State<UserFormSheet> {
                           return;
                         }
 
-                        // Untuk add new: password wajib
                         if (!isEdit && passwordCtrl.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Password wajib diisi!')),
@@ -139,7 +131,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
                             'name': nameCtrl.text.trim(),
                             'role': selectedRole,
                             'email': emailCtrl.text.trim(),
-                            if (!isEdit) 'password': passwordCtrl.text.trim(), // Password hanya untuk add new
+                            if (!isEdit) 'password': passwordCtrl.text.trim(), 
                           },
                         );
                       },
@@ -160,7 +152,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
     bool readOnly = false,
     bool obscureText = false,
     String? hint,
-    bool enabled = true, // Tambah parameter enabled
+    bool enabled = true, 
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -187,7 +179,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
             child: TextField(
               controller: ctrl,
               readOnly: readOnly,
-              enabled: enabled, // Tambah enabled
+              enabled: enabled, 
               obscureText: obscureText,
               decoration: InputDecoration(
                 hintText: hint,

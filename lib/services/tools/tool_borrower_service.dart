@@ -24,7 +24,6 @@ class ToolBorrowService {
       .gte('stock_available', 1);
 
   return (res as List)
-      // filter category aktif DI SINI, bukan di JOIN
       .where((e) =>
           e['categories'] != null &&
           e['categories']['is_active'] == true)

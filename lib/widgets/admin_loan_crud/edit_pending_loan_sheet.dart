@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../models/loan_model.dart';
-import '../../services/admin_loan_action_service.dart';
-import '../confirm_snackbar.dart';
+import '../../services/admin/admin_loan_action_service.dart';
+import '../notifications/confirm_snackbar.dart';
 import '../../widgets/admin_loan_crud/search_dropdown.dart';
 
 class EditPendingLoanSheet extends StatefulWidget {

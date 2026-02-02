@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/loan_model.dart';
-import '../models/tools/fine_model.dart';
+import '../../models/loan_model.dart';
+import '../../models/tools/fine_model.dart';
+import '../auth/user_session.dart';
 
 class OfficerLoanService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -25,8 +26,9 @@ class OfficerLoanService {
 
       if (query.isNotEmpty) {
         return loans
-            .where((l) =>
-                l.borrowerName.toLowerCase().contains(query.toLowerCase()))
+            .where(
+              (l) => l.borrowerName.toLowerCase().contains(query.toLowerCase()),
+            )
             .toList();
       }
       return loans;
@@ -49,30 +51,62 @@ class OfficerLoanService {
     }
   }
 
-  Future<void> approveLoan(int loanId) =>
+  Future<void> pickupLoan(int loanId) =>
       updateLoanStatus(loanId: loanId, newStatus: LoanStatus.borrowed);
-Future<void> returnLoan({
+
+  Future<void> rejectedLoanWithOfficer({required int loanId}) async {
+    final officerId = UserSession.id;
+
+    if (officerId.isEmpty) {
+      throw Exception('User not logged in');
+    }
+
+    try {
+      await _client
+          .from('loans')
+          .update({'status_loan': 'rejected', 'officer_id': officerId})
+          .eq('loan_id', loanId);
+    } catch (e) {
+      throw Exception('Failed to reject loan: $e');
+    }
+  }
+
+  Future<void> approveLoanWithOfficer({required int loanId}) async {
+    final officerId = UserSession.id;
+
+    try {
+      await _client
+          .from('loans')
+          .update({'status_loan': 'approved', 'officer_id': officerId})
+          .eq('loan_id', loanId);
+    } catch (e) {
+      throw Exception('Failed to approve loan: $e');
+    }
+  }
+
+  Future<void> returnLoan({
     required int loanId,
     required DateTime returnDate,
-    required Map<int, int?> itemDamageFines, 
+    required Map<int, int?> itemDamageFines,
     required double lateFine,
     required String officerId,
   }) async {
-    final batch = _client.from('loans').update({
-      'status_loan': 'returned',
-      'return_date': returnDate.toIso8601String(),
-      'late_fine': lateFine,
-      'officer_id': officerId,
-    }).eq('loan_id', loanId);
+    final batch = _client
+        .from('loans')
+        .update({
+          'status_loan': 'returned',
+          'return_date': returnDate.toIso8601String(),
+          'late_fine': lateFine,
+          'officer_id': officerId,
+        })
+        .eq('loan_id', loanId);
 
     try {
-      // Update loans table
       await batch;
 
-      // Update loan_details per item
       for (final entry in itemDamageFines.entries) {
         final loanDetailId = entry.key;
-        final fineId = entry.value; // bisa null kalau ga ada denda
+        final fineId = entry.value;
 
         await _client
             .from('loan_details')
@@ -87,7 +121,6 @@ Future<void> returnLoan({
     }
   }
 
-  /// Fetch damage fines dari DB
   Future<List<FineModel>> fetchFines() async {
     try {
       final response = await _client.from('damage_fines').select('*');
@@ -98,5 +131,3 @@ Future<void> returnLoan({
     }
   }
 }
-
-

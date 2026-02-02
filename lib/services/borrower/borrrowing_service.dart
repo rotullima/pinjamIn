@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/supabase_config.dart';
-import '../models/tools/tool_model.dart';
+import '../../config/supabase_config.dart';
+import '../../models/tools/tool_model.dart';
 
 class LoanService {
   static final SupabaseClient _client = SupabaseConfig.client;
@@ -11,7 +11,6 @@ class LoanService {
     required DateTime endDate,
     required List<ToolModel> items,
   }) async {
-    // 1. insert loan
     final loanRes = await _client
         .from('loans')
         .insert({
@@ -25,7 +24,6 @@ class LoanService {
 
     final int loanId = loanRes['loan_id'];
 
-    // 2. insert loan details (stok diurus trigger)
     for (final tool in items) {
       await _client.from('loan_details').insert({
         'loan_id': loanId,

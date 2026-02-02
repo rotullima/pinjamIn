@@ -18,22 +18,18 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkSession() async {
-    // Add a small delay for better UX
     await Future.delayed(const Duration(milliseconds: 1500));
     
-    // Try to restore existing session
     final hasSession = await UserSession.restoreSession();
     
     if (!mounted) return;
     
     if (hasSession) {
-      // User is already logged in, go to dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
       );
     } else {
-      // No valid session, go to login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),

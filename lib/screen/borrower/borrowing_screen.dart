@@ -40,7 +40,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
     if (tool.stockAvailable <= 0) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('${tool.name} sedang kosong')));
+      ).showSnackBar(SnackBar(content: Text('${tool.name} is empty')));
       return;
     }
 
@@ -48,7 +48,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
     if (exists) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Sudah ada di keranjang')));
+      ).showSnackBar(const SnackBar(content: Text('already on cart')));
       return;
     }
 
@@ -58,7 +58,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${tool.name} ditambahkan ke keranjang'),
+        content: Text('${tool.name} add to cart'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -108,9 +108,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                       }).toList();
 
                       if (filtered.isEmpty) {
-                        return const Center(
-                          child: Text('Alat tidak ditemukan'),
-                        );
+                        return const Center(child: Text('tool not found'));
                       }
 
                       return ListView.builder(

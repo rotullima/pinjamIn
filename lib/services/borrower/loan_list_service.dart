@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/supabase_config.dart';
-import '../models/loan_model.dart';
+import '../../config/supabase_config.dart';
+import '../../models/loan_model.dart';
 
 class LoanListService {
   static final SupabaseClient _client = SupabaseConfig.client;
@@ -25,7 +25,6 @@ class LoanListService {
         .map((json) => LoanModel.fromJson(json))
         .toList();
 
-    // Filter hanya berdasarkan nama borrower, kalau query ada
     final filtered = borrowerNameQuery.isNotEmpty
         ? loans
             .where(
@@ -36,7 +35,7 @@ class LoanListService {
             .toList()
         : loans;
 
-    return filtered; // semua keluar, ga dibatasi 5
+    return filtered; 
   } catch (e) {
     throw Exception('Failed to fetch loans for dashboard: $e');
   }
@@ -48,7 +47,7 @@ static Future<void> updateLoanStatus({
   try {
     await _client
         .from('loans')
-        .update({'status_loan': newStatus.name}) // enum → string
+        .update({'status_loan': newStatus.name}) 
         .eq('loan_id', loanId);
   } catch (e) {
     throw Exception('Failed to update loan status: $e');

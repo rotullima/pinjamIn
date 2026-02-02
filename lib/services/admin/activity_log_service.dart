@@ -1,10 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/activity_log_model.dart';
+import '../../models/activity_log_model.dart';
 
 class ActivityLogService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Fetch all activity logs with user information
   Future<List<ActivityLog>> fetchActivityLogs() async {
     try {
       final response = await _supabase
@@ -50,7 +49,6 @@ class ActivityLogService {
     }
   }
 
-  /// Create a new activity log
   Future<void> createActivityLog({
     required String userId,
     required ActionEnum action,

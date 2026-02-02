@@ -1,5 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 enum ActionEnum { 
   create, 
   edit, 
@@ -29,7 +27,6 @@ class ActivityLog {
   final String? newValue;
   final DateTime createdAt;
   
-  // Additional fields from user join
   final String userName;
   final String userRole;
 
@@ -88,8 +85,6 @@ class ActivityLog {
   }
 
   String get entityName {
-    // This would typically come from joining with the actual entity tables
-    // For now, we'll use a placeholder
     return entityId.toString();
   }
 }

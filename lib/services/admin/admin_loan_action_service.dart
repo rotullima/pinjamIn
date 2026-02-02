@@ -1,7 +1,7 @@
 import 'package:pinjamln/models/loan_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/supabase_config.dart';
-import '../services/auth/user_session.dart';
+import '../../config/supabase_config.dart';
+import '../auth/user_session.dart';
 
 class LoanActionService {
   static final SupabaseClient _client = SupabaseConfig.client;

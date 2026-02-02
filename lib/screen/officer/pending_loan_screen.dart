@@ -4,11 +4,11 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/confirm_snackbar.dart';
+import '../../widgets/notifications/confirm_snackbar.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
-import '../../services/officer_loan_service.dart';
+import '../../services/officer/officer_loan_service.dart';
 
 class PendingLoanScreen extends StatefulWidget {
   const PendingLoanScreen({super.key});
@@ -43,9 +43,7 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
     try {
       final loans = await OfficerLoanService.fetchAllLoans();
       setState(() {
-        _loans = loans
-            .where((l) => l.status == LoanStatus.pending)
-            .toList();
+        _loans = loans.where((l) => l.status == LoanStatus.pending).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -56,8 +54,7 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
 
   List<LoanModel> get _filteredLoans {
     return _loans.where((loan) {
-      return _query.isEmpty ||
-          loan.borrowerName.toLowerCase().contains(_query);
+      return _query.isEmpty || loan.borrowerName.toLowerCase().contains(_query);
     }).toList();
   }
 
@@ -93,66 +90,82 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _filteredLoans.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No pending loans',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16),
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _filteredLoans.length,
-                              itemBuilder: (context, index) {
-                                final loan = _filteredLoans[index];
+                      ? const Center(
+                          child: Text(
+                            'No pending loans',
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _filteredLoans.length,
+                          itemBuilder: (context, index) {
+                            final loan = _filteredLoans[index];
 
-                                return LoanListCard(
-                                  data: loan,
-                                  actions: [
-                                    LoanAction(
-                                      type: LoanActionType.reject,
-                                      label: 'Reject',
-                                      onTap: () async {
-                                        try {
-                                          await OfficerLoanService().updateLoanStatus(
+                            return LoanListCard(
+                              data: loan,
+                              actions: [
+                                LoanAction(
+                                  type: LoanActionType.reject,
+                                  label: 'Reject',
+                                  onTap: () async {
+                                    try {
+                                      await OfficerLoanService()
+                                          .rejectedLoanWithOfficer(
                                             loanId: loan.loanId,
-                                            newStatus: LoanStatus.rejected,
                                           );
 
-                                          showConfirmSnackBar(
-                                              context, 'Loan rejected!');
+                                      setState(() {
+                                        _loans.removeWhere(
+                                          (l) => l.loanId == loan.loanId,
+                                        );
+                                      });
 
-                                          setState(() => _loans.remove(loan));
-                                        } catch (e) {
-                                          showConfirmSnackBar(
-                                              context, 'Failed: $e');
-                                        }
-                                      },
-                                    ),
-                                    LoanAction(
-                                      type: LoanActionType.confirm,
-                                      label: 'Confirm',
-                                      onTap: () async {
-                                        try {
-                                          await OfficerLoanService().updateLoanStatus(
+                                      showConfirmSnackBar(
+                                        context,
+                                        'Loan rejected successfully',
+                                      );
+                                    } catch (e) {
+                                      showConfirmSnackBar(
+                                        context,
+                                        'Failed to reject loan: $e',
+                                      );
+                                    }
+                                  },
+                                ),
+
+                                LoanAction(
+                                  type: LoanActionType.confirm,
+                                  label: 'Confirm',
+                                  onTap: () async {
+                                    try {
+                                      await OfficerLoanService()
+                                          .approveLoanWithOfficer(
                                             loanId: loan.loanId,
-                                            newStatus: LoanStatus.approved,
                                           );
 
-                                          showConfirmSnackBar(
-                                              context, 'Loan approved!');
+                                      setState(() {
+                                        _loans.removeWhere(
+                                          (l) => l.loanId == loan.loanId,
+                                        );
+                                      });
 
-                                          setState(() => _loans.remove(loan));
-                                        } catch (e) {
-                                          showConfirmSnackBar(
-                                              context, 'Failed: $e');
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                                      showConfirmSnackBar(
+                                        context,
+                                        'Loan approved successfully',
+                                      );
+                                    } catch (e) {
+                                      showConfirmSnackBar(
+                                        context,
+                                        'Failed to approve loan: $e',
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

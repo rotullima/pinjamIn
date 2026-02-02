@@ -3,7 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_header.dart';
 import '../../services/auth/user_session.dart';
-import '../../services/activity_log_service.dart';
+import '../../services/admin/activity_log_service.dart';
 import '../../models/activity_log_model.dart';
 
 class ActivityLogScreen extends StatefulWidget {
