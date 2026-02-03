@@ -71,15 +71,15 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _activityLogs.isEmpty
-                          ? const Center(child: Text('No activity logs found'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _activityLogs.length,
-                              itemBuilder: (context, index) {
-                                final log = _activityLogs[index];
-                                return _ActivityLogCard(log: log);
-                              },
-                            ),
+                      ? const Center(child: Text('No activity logs found'))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _activityLogs.length,
+                          itemBuilder: (context, index) {
+                            final log = _activityLogs[index];
+                            return _ActivityLogCard(log: log);
+                          },
+                        ),
                 ),
               ],
             ),
@@ -104,12 +104,13 @@ class _ActivityLogCard extends StatelessWidget {
   String _buildActivityText() {
     String actionText;
     String entityText = log.entity.name.toLowerCase();
+    final String loanPrefix = log.entity == EntityEnum.loan ? 'loan ' : '';
 
     switch (log.action) {
       case ActionEnum.create:
         actionText = 'CREATE';
         entityText = entityText == 'item' ? 'item' : entityText;
-        return '$actionText $entityText "${log.entityName}" \n(${log.newValue ?? 'created'})';
+        return '$actionText $entityText "${log.entityName}" \n${log.newValue ?? 'created'}';
 
       case ActionEnum.borrow:
         return 'BORROW "${log.entityName}"';
@@ -122,13 +123,24 @@ class _ActivityLogCard extends StatelessWidget {
 
       case ActionEnum.edit:
         if (log.entity == EntityEnum.profile) {
-          return 'EDIT profile "${log.userName}" (role: ${log.newValue})';
+          return 'EDIT profile "${log.userName}" role: ${log.newValue}';
         } else {
-          return 'EDIT ${log.entity.name} "${log.entityName}" \n(${log.fieldName}: ${log.oldValue} → ${log.newValue})';
+          return 'EDIT ${log.entity.name} "${log.entityName}" \n${log.fieldName}: ${log.oldValue} → ${log.newValue}';
         }
 
       case ActionEnum.returned:
-        return 'RETURNED "${log.entityName}"';
+        String extra = '';
+        if (log.fieldName == 'late_fine' && log.newValue != null) {
+          final fine = double.tryParse(log.newValue!) ?? 0.0;
+          extra = fine > 0
+              ? ' (denda telat: Rp ${fine.toStringAsFixed(0)})'
+              : ' (no penalty)';
+        } else if (log.fieldName == 'status_loan' &&
+            log.oldValue == 'penalty' &&
+            log.newValue == 'returned') {
+          extra = ' (fine charged)';
+        }
+        return 'RETURNED $loanPrefix"${log.entityName}"$extra';
 
       case ActionEnum.delete:
         return 'DELETE ${log.entity.name.toLowerCase()} "${log.entityName}"';

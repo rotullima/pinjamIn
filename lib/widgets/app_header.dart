@@ -72,7 +72,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Logout berhasil'),
+                content: Text('Logout succesfull'),
                 backgroundColor: Colors.green,
               ),
             );

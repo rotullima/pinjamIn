@@ -48,7 +48,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
         isLoadingBorrowers = false;
       });
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal memuat daftar borrower: $e');
+      showConfirmSnackBar(context, 'Failed to load borrower: $e');
       setState(() => isLoadingBorrowers = false);
     }
   }
@@ -62,7 +62,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
         isLoadingItems = false;
       });
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal memuat daftar item: $e');
+      showConfirmSnackBar(context, 'Failed to load tool: $e');
       setState(() => isLoadingItems = false);
     }
   }
@@ -107,15 +107,15 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
 
   Future<void> _submit() async {
     if (selectedBorrower == null) {
-      showConfirmSnackBar(context, 'Pilih borrower terlebih dahulu');
+      showConfirmSnackBar(context, 'Select borrower first!');
       return;
     }
     if (selectedItems.isEmpty) {
-      showConfirmSnackBar(context, 'Pilih minimal satu item');
+      showConfirmSnackBar(context, 'Choose at least 1');
       return;
     }
     if (_endDate.isBefore(_startDate)) {
-      showConfirmSnackBar(context, 'Tanggal akhir tidak boleh sebelum tanggal mulai');
+      showConfirmSnackBar(context, 'The end date cannot be before the start date');
       return;
     }
 
@@ -130,10 +130,10 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
         note: null, 
       );
 
-      showConfirmSnackBar(context, 'Loan berhasil dibuat');
+      showConfirmSnackBar(context, 'Loan succesfully applied');
       Navigator.pop(context, true); 
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal membuat loan: $e');
+      showConfirmSnackBar(context, 'Failed apply loan: $e');
     }
   }
 

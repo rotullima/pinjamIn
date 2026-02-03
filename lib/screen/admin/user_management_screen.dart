@@ -59,7 +59,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gagal memuat daftar user: $e')));
+        ).showSnackBar(SnackBar(content: Text('Failed to load user: $e')));
       }
       setState(() {
         users = [];
@@ -279,7 +279,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('User ${user.name} berhasil diaktifkan kembali'),
+          content: Text('User ${user.name} succesfully activated'),
         ),
       );
 
@@ -289,7 +289,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal aktifkan user: $e'),
+          content: Text('Failed activate: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -307,7 +307,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User ${user.name} berhasil dinonaktifkan')),
+        SnackBar(content: Text('User ${user.name} succesfully deactivated')),
       );
 
       await _fetchUsers();
@@ -316,7 +316,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal hapus user: $e'),
+          content: Text('Failed deactivated user: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -356,7 +356,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User berhasil diupdate!')),
+          const SnackBar(content: Text('User succesfully updated!')),
         );
 
         await _fetchUsers();
@@ -384,7 +384,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         final name = result['name'] as String;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User berhasil dibuat! Nama: $name')),
+          SnackBar(content: Text('User succesfully created! Name: $name')),
         );
 
         await _fetchUsers();

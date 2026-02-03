@@ -68,9 +68,11 @@ class ActivityLog {
       case 'approve': return ActionEnum.approve;
       case 'reject': return ActionEnum.reject;
       case 'borrow': return ActionEnum.borrow;
-      case 'return': return ActionEnum.returned;
-      default: return ActionEnum.create;
-    }
+      case 'returned': return ActionEnum.returned;
+      default:
+      print('Unknown action ditemukan: "$action"'); // untuk debug
+      return ActionEnum.create;
+  }
   }
 
   static EntityEnum parseEntity(String entity) {

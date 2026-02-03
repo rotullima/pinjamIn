@@ -23,6 +23,16 @@ class ToolBorrowService {
       .eq('is_active', true)
       .gte('stock_available', 1);
 
+  print("Raw response dari Supabase:");
+  print(res);   // ← lihat bentuk data aslinya
+
+  // atau lebih detail:
+  for (var row in res) {
+    print("Row: $row");
+    print("stock_available: ${row['stock_available']} (${row['stock_available'].runtimeType})");
+    print("item_id: ${row['item_id']} (${row['item_id'].runtimeType})");
+  }
+
   return (res as List)
       .where((e) =>
           e['categories'] != null &&

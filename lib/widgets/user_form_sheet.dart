@@ -98,7 +98,7 @@ class _UserFormSheetState extends State<UserFormSheet> {
                       onTap: () {
                         if (nameCtrl.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Nama wajib diisi!')),
+                            const SnackBar(content: Text('Name is required!')),
                           );
                           return;
                         }
@@ -106,21 +106,21 @@ class _UserFormSheetState extends State<UserFormSheet> {
                         final email = emailCtrl.text.trim();
                         if (email.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Email wajib diisi!')),
+                            const SnackBar(content: Text('Invalid email format!')),
                           );
                           return;
                         }
 
                         if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Format email tidak valid!')),
+                            const SnackBar(content: Text('Invalid email format!')),
                           );
                           return;
                         }
 
                         if (!isEdit && passwordCtrl.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Password wajib diisi!')),
+                            const SnackBar(content: Text('Password is required!')),
                           );
                           return;
                         }

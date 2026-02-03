@@ -48,7 +48,7 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
         isLoadingItems = false;
       });
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal memuat daftar item: $e');
+      showConfirmSnackBar(context, 'Failed to load tool: $e');
       setState(() => isLoadingItems = false);
     }
   }
@@ -86,9 +86,9 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
         selectedDetails.remove(detail);
       });
       await _loadAvailableItems();
-      showConfirmSnackBar(context, 'Item dihapus dari pinjaman');
+      showConfirmSnackBar(context, 'Item removed from loan');
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal menghapus: $e');
+      showConfirmSnackBar(context, 'Failed to delete: $e');
     }
   }
 
@@ -106,9 +106,9 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
         showAddItem = false;
       });
       await _loadAvailableItems();
-      showConfirmSnackBar(context, '${item.name} ditambahkan');
+      showConfirmSnackBar(context, '${item.name} added');
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal menambahkan: $e');
+      showConfirmSnackBar(context, 'Failed to add: $e');
     }
   }
 
@@ -122,10 +122,10 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
           endDate: _endDate != widget.loan.endDate ? _endDate : null,
         );
       }
-      showConfirmSnackBar(context, 'Peminjaman pending berhasil diperbarui');
+      showConfirmSnackBar(context, 'Pending loan succesfully updated');
       Navigator.pop(context, true);
     } catch (e) {
-      showConfirmSnackBar(context, 'Gagal menyimpan: $e');
+      showConfirmSnackBar(context, 'Failed to save: $e');
     }
   }
 
