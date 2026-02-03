@@ -109,7 +109,7 @@ class _ActivityLogCard extends StatelessWidget {
       case ActionEnum.create:
         actionText = 'CREATE';
         entityText = entityText == 'item' ? 'item' : entityText;
-        return '$actionText $entityText "${log.entityName}" (${log.newValue ?? 'created'})';
+        return '$actionText $entityText "${log.entityName}" \n(${log.newValue ?? 'created'})';
 
       case ActionEnum.borrow:
         return 'BORROW "${log.entityName}"';
@@ -124,10 +124,10 @@ class _ActivityLogCard extends StatelessWidget {
         if (log.entity == EntityEnum.profile) {
           return 'EDIT profile "${log.userName}" (role: ${log.newValue})';
         } else {
-          return 'EDIT ${log.entity.name} "${log.entityName}" (${log.fieldName}: ${log.oldValue} → ${log.newValue})';
+          return 'EDIT ${log.entity.name} "${log.entityName}" \n(${log.fieldName}: ${log.oldValue} → ${log.newValue})';
         }
 
-      case ActionEnum.returnLoan:
+      case ActionEnum.returned:
         return 'RETURNED "${log.entityName}"';
 
       case ActionEnum.delete:

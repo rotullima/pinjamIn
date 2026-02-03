@@ -43,7 +43,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
     super.initState();
     nameCtrl = TextEditingController(text: widget.tool?.name ?? '');
     stockCtrl = TextEditingController(
-      text: widget.tool?.stockAvailable.toString() ?? '',
+      text: widget.tool?.stockTotal.toString() ?? '',
     );
     selectedCondition = widget.tool?.statusItem ?? 'good';
 
@@ -379,7 +379,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
         categoryId: selectedCategory!.id,
         description: null,
         imagePath: imageUrl ?? widget.tool!.imagePath,
-        stockAvailable: int.parse(stockCtrl.text),
+        stockTotal: int.parse(stockCtrl.text),
         statusItem: selectedCondition,
       );
     }

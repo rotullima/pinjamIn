@@ -5,7 +5,7 @@ enum ActionEnum {
   approve, 
   reject, 
   borrow, 
-  returnLoan 
+  returned 
 }
 
 enum EntityEnum { 
@@ -68,7 +68,7 @@ class ActivityLog {
       case 'approve': return ActionEnum.approve;
       case 'reject': return ActionEnum.reject;
       case 'borrow': return ActionEnum.borrow;
-      case 'return': return ActionEnum.returnLoan;
+      case 'return': return ActionEnum.returned;
       default: return ActionEnum.create;
     }
   }

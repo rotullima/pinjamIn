@@ -85,13 +85,14 @@ class OfficerLoanService {
   }
 
   Future<void> returnLoan({
-    required int loanId,
-    required DateTime returnDate,
-    required Map<int, int?> itemDamageFines,
-    required double lateFine,
-    required String officerId,
-  }) async {
-    final batch = _client
+  required int loanId,
+  required DateTime returnDate,
+  required Map<int, ({ReturnCondition condition, int? fineId})> itemReturns,
+  required double lateFine,
+  required String officerId,
+}) async {
+  try {
+    await _client
         .from('loans')
         .update({
           'status_loan': 'returned',
@@ -101,25 +102,75 @@ class OfficerLoanService {
         })
         .eq('loan_id', loanId);
 
-    try {
-      await batch;
+    for (final entry in itemReturns.entries) {
+      final loanDetailId = entry.key;
+      final condition = entry.value.condition;
+      final fineId = entry.value.fineId;
 
-      for (final entry in itemDamageFines.entries) {
-        final loanDetailId = entry.key;
-        final fineId = entry.value;
-
-        await _client
-            .from('loan_details')
-            .update({
-              'return_condition': fineId != null ? 'damaged' : 'good',
-              'damage_fine': fineId,
-            })
-            .eq('loan_detail_id', loanDetailId);
-      }
-    } catch (e) {
-      throw Exception('Failed to return loan: $e');
+      await _client
+          .from('loan_details')
+          .update({
+            'return_condition': condition.name, 
+            'damage_fine': fineId,
+          })
+          .eq('loan_detail_id', loanDetailId);
     }
+  } catch (e) {
+    throw Exception('Failed to return loan: $e');
   }
+}
+
+Future<void> returnLoanWithPenalty({
+  required int loanId,
+  required DateTime returnDate,
+  required double lateFine,
+  required String officerId,
+  required Map<int, ({ReturnCondition condition, int? fineId})> itemReturns,
+}) async {
+  try {
+    // update loan -> penalty
+    await _client
+        .from('loans')
+        .update({
+          'status_loan': 'penalty',
+          'return_date': returnDate.toIso8601String(),
+          'late_fine': lateFine,
+          'officer_id': officerId,
+        })
+        .eq('loan_id', loanId);
+
+    // update detail items
+    for (final entry in itemReturns.entries) {
+      await _client
+          .from('loan_details')
+          .update({
+            'return_condition':
+                entry.value.condition.name, // good / abrasion / damage
+            'damage_fine': entry.value.fineId,
+          })
+          .eq('loan_detail_id', entry.key);
+    }
+  } catch (e) {
+    throw Exception('Failed to return loan with penalty: $e');
+  }
+}
+
+Future<void> payPenaltyLoan({
+  required int loanId,
+  required String officerId,
+}) async {
+  try {
+    await _client
+        .from('loans')
+        .update({
+          'status_loan': 'returned',
+          'officer_id': officerId,
+        })
+        .eq('loan_id', loanId);
+  } catch (e) {
+    throw Exception('Failed to pay penalty: $e');
+  }
+}
 
   Future<List<FineModel>> fetchFines() async {
     try {

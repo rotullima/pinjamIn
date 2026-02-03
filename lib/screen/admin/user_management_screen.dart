@@ -3,10 +3,10 @@ import '../../constants/app_colors.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
-import '../../models/user_model.dart'; 
+import '../../models/user_model.dart';
 import '../../widgets/user_form_sheet.dart';
 import '../../services/auth/user_session.dart';
-import '../../services/auth/user_service.dart'; 
+import '../../services/auth/user_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -20,7 +20,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   late List<UserModel> users;
-  bool _isLoading = true; 
+  bool _isLoading = true;
 
   late UserService _userService;
 
@@ -29,8 +29,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     super.initState();
 
     users = [];
-    _userService =
-        UserService(); 
+    _userService = UserService();
 
     _fetchUsers();
 
@@ -382,8 +381,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
         );
 
+        final name = result['name'] as String;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User berhasil dibuat! ID: ${newUser.id}')),
+          SnackBar(content: Text('User berhasil dibuat! Nama: $name')),
         );
 
         await _fetchUsers();
@@ -440,7 +441,7 @@ class _ConfirmStatusDialog extends StatelessWidget {
             onConfirm();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondary, 
+            backgroundColor: AppColors.secondary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

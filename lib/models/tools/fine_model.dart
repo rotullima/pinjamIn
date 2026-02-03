@@ -26,3 +26,13 @@ class FineModel {
     'fine_amount': fineAmount,
   };
 }
+
+extension FineConditionMapper on FineModel {
+  ReturnCondition get returnCondition {
+    if (fineAmount == 0) return ReturnCondition.good;
+    if (fineAmount > 0 && fineAmount < 50000) return ReturnCondition.abrasion;
+    return ReturnCondition.damaged;
+  }
+}
+
+enum ReturnCondition { good, abrasion, damaged }

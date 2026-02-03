@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
-import '../dummy/loan_dummy.dart';
-import '../dummy/tools/fine_dummy.dart';
+import '../models/loan_model.dart';
+import '../models/tools/fine_model.dart';
 import '../models/loan_fine_state.dart';
-import 'notifications/confirm_snackbar.dart';
+import '../services/officer/officer_loan_service.dart';
+import '../services/auth/user_session.dart';
+import '../widgets/notifications/confirm_snackbar.dart';
+import 'package:intl/intl.dart';
 
 class ReturningLoanSheet extends StatefulWidget {
-  final LoanDummy loan;
+  final LoanModel loan;
 
   const ReturningLoanSheet({super.key, required this.loan});
 
@@ -15,56 +18,59 @@ class ReturningLoanSheet extends StatefulWidget {
 }
 
 class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
-  late Map<String, FineDummy?> itemFines;
+  final OfficerLoanService _service = OfficerLoanService();
+
   final TextEditingController payCtrl = TextEditingController();
+
+  Map<int, ({ReturnCondition condition, int? fineId})> _buildItemReturns() {
+    return {
+      for (final entry in itemFines.entries)
+        entry.key: (
+          condition: entry.value?.returnCondition ?? ReturnCondition.good,
+          fineId: entry.value?.id,
+        ),
+    };
+  }
+
+  final NumberFormat _rupiah = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+
+  String _formatRp(num value) => _rupiah.format(value);
 
   late LoanFineState fineState;
 
-  @override
+  List<FineModel> fines = [];
+
+  late Map<int, FineModel?> itemFines;
+
   @override
   void initState() {
     super.initState();
 
-    itemFines = {for (var item in widget.loan.items) item.name: null};
+    itemFines = {
+      for (var d in widget.loan.details)
+        if (d.loanDetailId != null) d.loanDetailId!: null,
+    };
 
-    final bool isPenalty = widget.loan.status == 'penalty';
+    fineState = _calculateLateFine(widget.loan.endDate);
 
-    if (isPenalty) {
-      fineState = LoanFineState(
-        lateDays: widget.loan.penaltyDays ?? 0,
-        lateFine: (widget.loan.penaltyDays ?? 0) * 2500,
-        conditionFine: (widget.loan.fineAmount ?? 0).toInt(),
-        totalFine:
-            ((widget.loan.penaltyDays ?? 0) * 2500) +
-            (widget.loan.fineAmount ?? 0).toInt(),
-      );
-    } else {
-      fineState = _calculateLateFine(widget.loan.endDate);
-    }
+    _loadFines();
   }
 
-  void _recalculateFine() {
-    final conditionTotal = itemFines.values.fold<int>(
-      0,
-      (sum, f) => sum + (f?.fineAmount.toInt() ?? 0),
-    );
-
-    fineState = LoanFineState(
-      lateDays: fineState.lateDays,
-      lateFine: fineState.lateFine,
-      conditionFine: conditionTotal,
-      totalFine: fineState.lateFine + conditionTotal,
-    );
+  Future<void> _loadFines() async {
+    final data = await _service.fetchFines();
+    setState(() => fines = data);
   }
 
   LoanFineState _calculateLateFine(DateTime endDate) {
     final now = DateTime.now();
-
     final today = DateTime(now.year, now.month, now.day);
     final end = DateTime(endDate.year, endDate.month, endDate.day);
 
     final lateDays = today.isAfter(end) ? today.difference(end).inDays : 0;
-
     final lateFine = lateDays * 2500;
 
     return LoanFineState(
@@ -75,11 +81,29 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
     );
   }
 
+  void _recalculateFine() {
+    final conditionTotal = itemFines.values.fold<int>(
+      0,
+      (sum, f) => sum + (f?.fineAmount.toInt() ?? 0),
+    );
+
+    setState(() {
+      fineState = LoanFineState(
+        lateDays: fineState.lateDays,
+        lateFine: fineState.lateFine,
+        conditionFine: conditionTotal,
+        totalFine: fineState.lateFine + conditionTotal,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isPenalty = widget.loan.status == 'penalty';
-    final int payAmount = int.tryParse(payCtrl.text) ?? 0;
-    final bool canConfirm = payAmount >= fineState.totalFine && payAmount > 0;
+    final payAmount =
+        int.tryParse(payCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+    final canConfirm =
+        fineState.totalFine == 0 || payAmount == fineState.totalFine;
 
     return Center(
       child: Material(
@@ -95,10 +119,10 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
+              const Center(
                 child: Text(
-                  isPenalty ? 'Pay Form' : 'Return Form',
-                  style: const TextStyle(
+                  'Return Form',
+                  style: TextStyle(
                     fontSize: 16,
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -110,14 +134,10 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
 
               Text(
                 'Late return: ${fineState.lateDays} days x 2500',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: const TextStyle(color: AppColors.primary),
               ),
-
-              const SizedBox(height: 10),
-              _readonlyField(fineState.lateFine.toString()),
+              const SizedBox(height: 6),
+              _readonly(_formatRp(fineState.lateFine)),
 
               const SizedBox(height: 14),
               const Text(
@@ -128,60 +148,47 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
               const SizedBox(height: 8),
 
               Column(
-                children: widget.loan.items.map((item) {
+                children: widget.loan.details.map((detail) {
+                  if (detail.loanDetailId == null) return const SizedBox();
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                    child: DropdownButtonFormField<FineModel>(
+                      value: itemFines[detail.loanDetailId],
+                      decoration: _boxDeco(),
+                      hint: Text(
+                        detail.itemName ?? 'Item',
+                        style: const TextStyle(color: AppColors.primary),
                       ),
-                      child: DropdownButtonFormField<FineDummy>(
-                        value: itemFines[item.name],
-                        decoration: _boxDeco(),
-                        hint: Text(
-                          item.name,
-                          style: TextStyle(color: AppColors.primary),
-                        ),
-                        items: fineDummies
-                            .map(
-                              (f) => DropdownMenuItem(
-                                value: f,
-                                child: Text(
-                                  f.condition,
-                                  style: TextStyle(color: AppColors.primary),
+                      items: fines
+                          .map(
+                            (f) => DropdownMenuItem(
+                              value: f,
+                              child: Text(
+                                f.condition,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
                                 ),
                               ),
-                            )
-                            .toList(),
-                        onChanged: widget.loan.status == 'penalty'
-                            ? null
-                            : (v) {
-                                setState(() {
-                                  itemFines[item.name] = v;
-                                  _recalculateFine();
-                                });
-                              },
-                      ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        itemFines[detail.loanDetailId!] = v;
+                        _recalculateFine();
+                      },
                     ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 6),
 
               const SizedBox(height: 14),
               const Text(
-                'Fine amount',
+                'Total Fine',
                 style: TextStyle(color: AppColors.primary),
               ),
               const SizedBox(height: 6),
-              _readonlyField(fineState.totalFine.toString()),
+              _readonly(_formatRp(fineState.totalFine)),
 
               const SizedBox(height: 14),
               const Text(
@@ -189,59 +196,93 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
                 style: TextStyle(color: AppColors.primary),
               ),
               const SizedBox(height: 6),
-              _input(payCtrl, enabled: true),
+              _input(payCtrl),
 
               const SizedBox(height: 20),
 
               Row(
                 children: [
-                  if (!isPenalty)
-                    Expanded(
-                      child: _actionButton(
-                        label: 'Pay Later',
-                        icon: Icons.close,
-                        onTap: () {
-                          showConfirmSnackBar(context, 'pay later loan fine');
+                  // CONFIRM
+                  Expanded(
+                    child: SizedBox(
+                      height: 42,
+                      child: ElevatedButton.icon(
+                        onPressed: canConfirm
+                            ? () async {
+                                final itemReturns = _buildItemReturns();
 
-                          final penaltyData = {
-                            'status': 'penalty',
-                            'penaltyDays': fineState.lateDays,
-                            'itemConditions': itemFines.map(
-                              (k, v) => MapEntry(k, v?.condition),
-                            ),
-                            'fineAmount': fineState.conditionFine,
-                          };
+                                await _service.returnLoan(
+                                  loanId: widget.loan.loanId,
+                                  returnDate: DateTime.now(),
+                                  lateFine: fineState.lateFine.toDouble(),
+                                  officerId: UserSession.id,
+                                  itemReturns: itemReturns,
+                                );
 
-                          Navigator.pop(context, penaltyData);
-                        },
+                                if (!mounted) return;
+                                showConfirmSnackBar(context, 'Loan returned');
+                                Navigator.pop(context, true);
+                              }
+                            : null,
+                        icon: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Confirm',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          disabledBackgroundColor: AppColors.secondary
+                              .withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
                       ),
                     ),
+                  ),
 
-                  if (!isPenalty) const SizedBox(width: 12),
+                  const SizedBox(width: 12),
 
+                  // PAY LATER
                   Expanded(
-                    child: _actionButton(
-                      label: 'Confirm',
-                      icon: Icons.check,
-                      enabled: canConfirm,
-                      onTap: canConfirm
-                          ? () {
-                              showConfirmSnackBar(context, 'loan returned!');
+                    child: SizedBox(
+                      height: 42,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final itemReturns = _buildItemReturns();
 
-                              final paymentData = {
-                                'status': 'returned',
-                                'payAmount': int.tryParse(payCtrl.text) ?? 0,
-                                'penaltyDays': fineState.lateDays,
-                                'itemConditions': itemFines.map(
-                                  (k, v) => MapEntry(k, v?.condition),
-                                ),
-                                'fineAmount': fineState.totalFine,
-                                'isPaid': true,
-                              };
+                          await _service.returnLoanWithPenalty(
+                            loanId: widget.loan.loanId,
+                            returnDate: DateTime.now(),
+                            lateFine: fineState.lateFine.toDouble(),
+                            officerId: UserSession.id,
+                            itemReturns: itemReturns,
+                          );
 
-                              Navigator.pop(context, paymentData);
-                            }
-                          : null,
+                          if (!mounted) return;
+                          showConfirmSnackBar(context, 'Marked as penalty');
+                          Navigator.pop(context, true);
+                        },
+                        icon: const Icon(
+                          Icons.schedule,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Pay Later',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -253,35 +294,29 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
     );
   }
 
-  Widget _readonlyField(String value) {
-    return _input(TextEditingController(text: value), enabled: false);
-  }
+  Widget _readonly(String value) => _input(TextEditingController(text: value));
 
-  Widget _input(TextEditingController ctrl, {bool enabled = true}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: ctrl,
-        enabled: enabled,
-        keyboardType: enabled ? TextInputType.number : null,
-        onChanged: enabled
-            ? (value) {
-                setState(() {});
-              }
-            : null,
-        decoration: _boxDeco(),
-        style: TextStyle(color: AppColors.primary),
-      ),
+  Widget _input(TextEditingController ctrl) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: TextInputType.number,
+      decoration: _boxDeco(),
+      style: const TextStyle(color: AppColors.primary),
+      onChanged: (value) {
+        final numeric = value.replaceAll(RegExp(r'[^0-9]'), '');
+        if (numeric.isEmpty) {
+          ctrl.clear();
+          setState(() {});
+          return;
+        }
+
+        final number = int.parse(numeric);
+        ctrl.value = TextEditingValue(
+          text: _formatRp(number),
+          selection: TextSelection.collapsed(offset: _formatRp(number).length),
+        );
+        setState(() {});
+      },
     );
   }
 
@@ -292,31 +327,6 @@ class _ReturningLoanSheetState extends State<ReturningLoanSheet> {
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide.none,
     ),
-
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
   );
-
-  Widget _actionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback? onTap,
-    bool enabled = true,
-  }) {
-    return SizedBox(
-      height: 42,
-      child: ElevatedButton.icon(
-        onPressed: enabled ? onTap : null,
-        icon: Icon(icon, size: 18, color: AppColors.background),
-        label: Text(label, style: TextStyle(color: AppColors.background)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
-          disabledBackgroundColor: AppColors.secondary.withOpacity(0.4),
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
 }

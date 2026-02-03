@@ -5,6 +5,8 @@ import 'package:pinjamln/screen/borrower/borrowing_screen.dart';
 import 'package:pinjamln/screen/borrower/loan_list_screen.dart';
 import 'package:pinjamln/screen/officer/approved_loan_screen.dart';
 import 'package:pinjamln/screen/officer/pending_loan_screen.dart';
+import 'package:pinjamln/screen/officer/penalty_loan_screen.dart';
+import '../../screen/officer/returning_loan_screen.dart';
 import '../constants/app_colors.dart';
 import '../screen/dashboard_screen.dart';
 import '../screen/admin/user_management_screen.dart';
@@ -168,30 +170,30 @@ class AppDrawer extends StatelessWidget {
             );
           },
         },
-        // {
-        //   'icon': Icons.south_west,
-        //   'label': 'Returning Loan List',
-        //   'onTap': () {
-        //     Navigator.pushReplacement(
-        //       context,
-        //       MaterialPageRoute(
-        //         builder: (context) => const ReturningLoanScreen(),
-        //       ),
-        //     );
-        //   },
-        // },
-        // {
-        //   'icon': Icons.attach_money,
-        //   'label': 'Penalty Loan List',
-        //   'onTap': () {
-        //     Navigator.pushReplacement(
-        //       context,
-        //       MaterialPageRoute(
-        //         builder: (context) => const PenaltyLoanScreen(),
-        //       ),
-        //     );
-        //   },
-        // },
+        {
+          'icon': Icons.south_west,
+          'label': 'Returning Loan List',
+          'onTap': () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReturningLoanScreen(),
+              ),
+            );
+          },
+        },
+        {
+          'icon': Icons.attach_money,
+          'label': 'Penalty Loan List',
+          'onTap': () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PenaltyLoanScreen(),
+              ),
+            );
+          },
+        },
       ]);
     } else if (role == 'borrower') {
       menuItems.addAll([

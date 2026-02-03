@@ -90,7 +90,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
 
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final tool = filtered[index];

@@ -58,7 +58,7 @@ class UserService {
 
     final userData = jsonDecode(res.body)['user'] as Map<String, dynamic>;
     return UserModel.fromJson(userData);
-  }
+  } 
 
   Future<UserModel> updateUser({
     required String id,
