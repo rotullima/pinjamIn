@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../models/loan_model.dart';
 import '../../services/admin/admin_loan_action_service.dart';
-import '../notifications/confirm_snackbar.dart';
 import '../../widgets/admin_loan_crud/search_dropdown.dart';
+import '../../widgets/notifications/app_toast.dart';
+
 
 class EditPendingLoanSheet extends StatefulWidget {
   final LoanModel loan;
@@ -48,7 +49,12 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
         isLoadingItems = false;
       });
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed to load tool: $e');
+      showToast(
+  context,
+  'Failed to load tool',
+  isError: true,
+);
+
       setState(() => isLoadingItems = false);
     }
   }
@@ -86,9 +92,15 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
         selectedDetails.remove(detail);
       });
       await _loadAvailableItems();
-      showConfirmSnackBar(context, 'Item removed from loan');
+      showToast(context, 'Item removed from loan');
+
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed to delete: $e');
+      showToast(
+  context,
+  'Failed to delete item',
+  isError: true,
+);
+
     }
   }
 
@@ -106,9 +118,15 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
         showAddItem = false;
       });
       await _loadAvailableItems();
-      showConfirmSnackBar(context, '${item.name} added');
+      showToast(context, '${item.name} added');
+
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed to add: $e');
+      showToast(
+  context,
+  'Failed to add item',
+  isError: true,
+);
+
     }
   }
 
@@ -122,10 +140,11 @@ class _EditPendingLoanSheetState extends State<EditPendingLoanSheet> {
           endDate: _endDate != widget.loan.endDate ? _endDate : null,
         );
       }
-      showConfirmSnackBar(context, 'Pending loan succesfully updated');
+      showToast(context, 'Pending loan successfully updated');
+
       Navigator.pop(context, true);
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed to save: $e');
+      showToast(context, 'Failed to save: $e', isError: true);
     }
   }
 

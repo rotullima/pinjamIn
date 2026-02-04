@@ -4,11 +4,11 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/notifications/confirm_snackbar.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
 import '../../services/officer/officer_loan_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class ApprovedLoanScreen extends StatefulWidget {
   const ApprovedLoanScreen({super.key});
@@ -92,64 +92,62 @@ class _ApprovedLoanScreenState extends State<ApprovedLoanScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _approvedLoans.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No approved loans',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16),
+                      ? const Center(
+                          child: Text(
+                            'No approved loans',
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _approvedLoans.length,
+                          itemBuilder: (context, index) {
+                            final loan = _approvedLoans[index];
+
+                            List<LoanAction> actions = [
+                              LoanAction(
+                                type: LoanActionType.pickup,
+                                label: 'Pick Up',
+                                onTap: () async {
+                                  try {
+                                    await _service.pickupLoan(loan.loanId);
+
+                                    setState(() {
+                                      final i = _loans.indexOf(loan);
+                                      _loans[i] = LoanModel(
+                                        loanId: loan.loanId,
+                                        borrowerId: loan.borrowerId,
+                                        borrowerName: loan.borrowerName,
+                                        officerId: loan.officerId,
+                                        startDate: loan.startDate,
+                                        endDate: loan.endDate,
+                                        status: LoanStatus.borrowed,
+                                        returnDate: loan.returnDate,
+                                        lateFine: loan.lateFine,
+                                        note: loan.note,
+                                        createdAt: loan.createdAt,
+                                        loanNumber: loan.loanNumber,
+                                        details: loan.details,
+                                      );
+                                    });
+
+                                    showToast(
+                                      context,
+                                      'Loan status changed to borrowed',
+                                    );
+                                  } catch (e) {
+                                    showToast(
+                                      context,
+                                      'Failed to update status: $e',
+                                    );
+                                  }
+                                },
                               ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _approvedLoans.length,
-                              itemBuilder: (context, index) {
-                                final loan = _approvedLoans[index];
+                            ];
 
-                                List<LoanAction> actions = [
-                                  LoanAction(
-                                    type: LoanActionType.pickup,
-                                    label: 'Pick Up',
-                                    onTap: () async {
-                                      try {
-                                        await _service.pickupLoan(loan.loanId);
-
-
-                                        setState(() {
-                                          final i = _loans.indexOf(loan);
-                                          _loans[i] = LoanModel(
-                                            loanId: loan.loanId,
-                                            borrowerId: loan.borrowerId,
-                                            borrowerName: loan.borrowerName,
-                                            officerId: loan.officerId,
-                                            startDate: loan.startDate,
-                                            endDate: loan.endDate,
-                                            status: LoanStatus.borrowed,
-                                            returnDate: loan.returnDate,
-                                            lateFine: loan.lateFine,
-                                            note: loan.note,
-                                            createdAt: loan.createdAt,
-                                            loanNumber: loan.loanNumber,
-                                            details: loan.details,
-                                          );
-                                        });
-
-                                        showConfirmSnackBar(
-                                          context,
-                                          'Loan status changed to borrowed',
-                                        );
-                                      } catch (e) {
-                                        showConfirmSnackBar(
-                                          context,
-                                          'Failed to update status: $e',
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ];
-
-                                return LoanListCard(data: loan, actions: actions);
-                              },
-                            ),
+                            return LoanListCard(data: loan, actions: actions);
+                          },
+                        ),
                 ),
               ],
             ),

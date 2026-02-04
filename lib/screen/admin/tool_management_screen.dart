@@ -10,6 +10,7 @@ import '../../services/auth/user_session.dart';
 import '../../widgets/tools/tool_form_sheet.dart';
 import '../../services/tools/tool_admin_service.dart';
 import '../../models/tools/tool_model.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class ToolManagementScreen extends StatefulWidget {
   const ToolManagementScreen({super.key});
@@ -293,8 +294,18 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
                       builder: (_) => ConfirmDeleteDialog(
                         message: 'Sure to remove this tool?',
                         onConfirm: () async {
-                          await _toolService.softDeleteTool(tool.itemId);
-                          await _loadTools();
+                          try {
+                            await _toolService.softDeleteTool(tool.itemId);
+                            await _loadTools();
+
+                            showToast(context, 'Tool removed successfully');
+                          } catch (e) {
+                            showToast(
+                              context,
+                              'Failed to remove tool',
+                              isError: true,
+                            );
+                          }
                         },
                       ),
                     );
@@ -320,6 +331,10 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
 
     if (result == true) {
       await _loadTools();
+      showToast(
+        context,
+        tool == null ? 'Tool added successfully' : 'Tool updated successfully',
+      );
     }
   }
 }

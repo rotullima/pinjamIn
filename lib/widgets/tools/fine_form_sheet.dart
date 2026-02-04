@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../models/tools/fine_model.dart';
+import 'package:intl/intl.dart';
 
 class FineFormSheet extends StatefulWidget {
   final FineModel? fine;
@@ -14,13 +15,20 @@ class FineFormSheet extends StatefulWidget {
 class _FineFormSheetState extends State<FineFormSheet> {
   late TextEditingController conditionCtrl;
   late TextEditingController fineAmountCtrl;
+  final NumberFormat _rupiah = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+
+  String _formatRp(num v) => _rupiah.format(v);
 
   @override
   void initState() {
     super.initState();
     conditionCtrl = TextEditingController(text: widget.fine?.condition ?? '');
     fineAmountCtrl = TextEditingController(
-      text: widget.fine?.fineAmount.toInt().toString() ?? '',
+      text: widget.fine != null ? _formatRp(widget.fine!.fineAmount) : '',
     );
   }
 
@@ -91,8 +99,12 @@ class _FineFormSheetState extends State<FineFormSheet> {
 
                         Navigator.pop(context, {
                           'condition': condition,
-                          'fineAmount':
-                              double.tryParse(fineAmountCtrl.text.trim()) ?? 0,
+                          'fineAmount': double.parse(
+                            fineAmountCtrl.text.replaceAll(
+                              RegExp(r'[^0-9]'),
+                              '',
+                            ),
+                          ),
                         });
                       },
                     ),
@@ -108,9 +120,8 @@ class _FineFormSheetState extends State<FineFormSheet> {
 
   Widget _input(
     String label,
-    TextEditingController ctrl, {
-    bool number = false,
-  }) {
+    TextEditingController ctrl,
+    ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -135,7 +146,7 @@ class _FineFormSheetState extends State<FineFormSheet> {
             ),
             child: TextField(
               controller: ctrl,
-              keyboardType: number ? TextInputType.number : TextInputType.text,
+              keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.transparent,
@@ -148,6 +159,18 @@ class _FineFormSheetState extends State<FineFormSheet> {
                   borderSide: BorderSide.none,
                 ),
               ),
+              onChanged: (v) {
+                final n = v.replaceAll(RegExp(r'[^0-9]'), '');
+                if (n.isEmpty) return ctrl.clear();
+
+                final val = int.parse(n);
+                final text = _formatRp(val);
+
+                ctrl.value = TextEditingValue(
+                  text: text,
+                  selection: TextSelection.collapsed(offset: text.length),
+                );
+              },
             ),
           ),
         ],

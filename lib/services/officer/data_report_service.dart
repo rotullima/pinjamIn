@@ -2,10 +2,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PrintReportService {
+class DataReportService {
   static final SupabaseClient _client = Supabase.instance.client;
 
-  static Future<void> printFullReport() async {
+  static Future<void> printDataReport() async {
     final pdf = pw.Document();
 
     final categories =
@@ -16,25 +16,27 @@ class PrintReportService {
     final loans =
         await _client
                 .from('loans')
-                .select('*, loan_details(*, items(*))')
+                .select('*, loan_details(*, items(*), damage_fine(*))')
                 .order('created_at', ascending: false)
             as List<dynamic>;
 
     pdf.addPage(
       pw.Page(
+        margin: const pw.EdgeInsets.all(24),
         build: (context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Full Report',
+                'Data Report',
                 style: pw.TextStyle(
                   fontSize: 28,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 20),
+              pw.SizedBox(height: 16),
 
+              // Categories
               pw.Text(
                 'Categories',
                 style: pw.TextStyle(
@@ -45,6 +47,8 @@ class PrintReportService {
               pw.SizedBox(height: 8),
               pw.Table.fromTextArray(
                 headers: ['ID', 'Name', 'Created At', 'Active'],
+                cellAlignment: pw.Alignment.centerLeft,
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 data: categories
                     .map(
                       (c) => [
@@ -57,7 +61,8 @@ class PrintReportService {
                     .toList(),
               ),
 
-              pw.SizedBox(height: 20),
+              pw.SizedBox(height: 16),
+              // Items
               pw.Text(
                 'Items',
                 style: pw.TextStyle(
@@ -71,18 +76,18 @@ class PrintReportService {
                   'ID',
                   'Name',
                   'Category ID',
-                  'Status',
                   'Stock Total',
                   'Stock Available',
                   'Active',
                 ],
+                cellAlignment: pw.Alignment.centerLeft,
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 data: items
                     .map(
                       (i) => [
                         i['item_id'].toString(),
                         i['name'] ?? '',
                         i['category_id']?.toString() ?? '',
-                        i['status_item'] ?? '',
                         i['stock_total']?.toString() ?? '0',
                         i['stock_available']?.toString() ?? '0',
                         (i['is_active'] ?? false) ? 'Yes' : 'No',
@@ -91,7 +96,8 @@ class PrintReportService {
                     .toList(),
               ),
 
-              pw.SizedBox(height: 20),
+              pw.SizedBox(height: 16),
+              // Damage Fines
               pw.Text(
                 'Damage Fines',
                 style: pw.TextStyle(
@@ -101,20 +107,24 @@ class PrintReportService {
               ),
               pw.SizedBox(height: 8),
               pw.Table.fromTextArray(
-                headers: ['ID', 'Condition', 'Amount', 'Created At'],
+                headers: ['ID', 'Condition', 'Amount', 'Active', 'Created At'],
+                cellAlignment: pw.Alignment.centerLeft,
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 data: fines
                     .map(
                       (f) => [
                         f['fine_id'].toString(),
                         f['condition'] ?? '',
                         f['fine_amount']?.toString() ?? '0',
+                        (f['is_active'] ?? false) ? 'Yes' : 'No',
                         f['created_at']?.toString().split('T')[0] ?? '',
                       ],
                     )
                     .toList(),
               ),
 
-              pw.SizedBox(height: 20),
+              pw.SizedBox(height: 16),
+              // Loans
               pw.Text(
                 'Loans',
                 style: pw.TextStyle(
@@ -140,20 +150,28 @@ class PrintReportService {
                       'Items:',
                       style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                     ),
+                    pw.SizedBox(height: 4),
                     pw.Table.fromTextArray(
                       headers: [
                         'Item ID',
                         'Name',
                         'Return Condition',
-                        'Damage Fine',
+                        'Damage Fine ID',
+                        'Damage Amount',
                       ],
+                      cellAlignment: pw.Alignment.centerLeft,
+                      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                       data: details.map((d) {
                         final item = d['items'] ?? {};
+                        final damage = d['damage_fine'] ?? {};
                         return [
                           d['item_id']?.toString() ?? '',
                           item['name'] ?? '',
                           d['return_condition'] ?? '',
-                          d['damage_fine']?.toString() ?? '',
+                          damage['fine_id']?.toString() ??
+                              d['damage_fine']?.toString() ??
+                              '',
+                          damage['fine_amount']?.toString() ?? '',
                         ];
                       }).toList(),
                     ),

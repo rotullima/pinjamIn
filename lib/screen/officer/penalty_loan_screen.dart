@@ -9,6 +9,7 @@ import '../../models/loan_model.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../services/officer/officer_loan_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class PenaltyLoanScreen extends StatefulWidget {
   const PenaltyLoanScreen({super.key});
@@ -22,24 +23,29 @@ class _PenaltyLoanScreenState extends State<PenaltyLoanScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
   bool _isLoading = true;
-List<LoanModel> _loans = [];
+  List<LoanModel> _loans = [];
 
   @override
-void initState() {
-  super.initState();
-  _searchCtrl.addListener(() {
-    setState(() => _query = _searchCtrl.text.toLowerCase());
-  });
-  _fetchLoans();
-}
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(() {
+      setState(() => _query = _searchCtrl.text.toLowerCase());
+    });
+    _fetchLoans();
+  }
 
-Future<void> _fetchLoans() async {
-  final data = await OfficerLoanService.fetchAllLoans();
-  setState(() {
-    _loans = data.where((l) => l.status == LoanStatus.penalty).toList();
-    _isLoading = false;
-  });
-}
+  Future<void> _fetchLoans() async {
+    try {
+      final data = await OfficerLoanService.fetchAllLoans();
+      setState(() {
+        _loans = data.where((l) => l.status == LoanStatus.penalty).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      showToast(context, 'Failed to load penalty loans', isError: true);
+    }
+  }
 
   void toggleDrawer() => setState(() => isOpen = !isOpen);
 
@@ -87,11 +93,16 @@ Future<void> _fetchLoans() async {
                                       context: context,
                                       isScrollControlled: true,
                                       backgroundColor: Colors.transparent,
-                                      builder: (_) => PenaltyLoanSheet(loan: loan),
+                                      builder: (_) =>
+                                          PenaltyLoanSheet(loan: loan),
                                     );
 
                                     if (result == 'paid') {
                                       setState(() => _loans.remove(loan));
+                                      showToast(
+                                        context,
+                                        'Penalty successfully paid',
+                                      );
                                     }
                                   },
                                 ),

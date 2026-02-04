@@ -9,7 +9,6 @@ import '../widgets/loan_card.dart';
 import '../services/auth/user_session.dart';
 import '../services/dashboard_service.dart';
 import '../models/loan_model.dart';
-import '../services/officer/print_report_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -137,12 +136,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       controller: _searchController,
                                     ),
                                   ),
-                                  if (currentRole == 'officer')
-                                    PrintReportButton(
-                                      onTap: () async {
-                                        await PrintReportService.printFullReport();
-                                      },
-                                    ),
+                                  if (currentRole == 'officer' || currentRole == 'admin')
+                                    PrintReportButton(),
                                 ],
                               ),
                               const SizedBox(height: 16),

@@ -7,6 +7,7 @@ import '../../widgets/app_drawer.dart';
 import 'loan_summary_screen.dart';
 import '../../models/tools/tool_model.dart';
 import '../../services/tools/tool_borrower_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class ToolBorrowScreen extends StatefulWidget {
   const ToolBorrowScreen({super.key});
@@ -38,17 +39,13 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
 
   void _addToCart(ToolModel tool) {
     if (tool.stockAvailable <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${tool.name} is empty')));
+      showToast(context, '${tool.name} is out of stock', isError: true);
       return;
     }
 
     final exists = _cart.any((t) => t.itemId == tool.itemId);
     if (exists) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('already on cart')));
+      showToast(context, 'Item already in cart', isError: true);
       return;
     }
 
@@ -56,12 +53,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
       _cart.add(tool);
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${tool.name} add to cart'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    showToast(context, '${tool.name} added to cart');
   }
 
   @override
@@ -98,7 +90,16 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                       }
 
                       if (snapshot.hasError) {
-                        return Center(child: Text(snapshot.error.toString()));
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          showToast(
+                            context,
+                            'Failed to load tools',
+                            isError: true,
+                          );
+                        });
+                        return const Center(
+                          child: Text('Failed to load tools'),
+                        );
                       }
 
                       final tools = snapshot.data!;
@@ -131,7 +132,7 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                 onPressed: _cart.isEmpty
                     ? null
                     : () async {
-                        final result = await Navigator.push(
+                        final bool? shouldRefresh = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
@@ -139,8 +140,11 @@ class _ToolBorrowScreenState extends State<ToolBorrowScreen> {
                           ),
                         );
 
-                        if (result == true) {
-                          setState(() {});
+                        if (shouldRefresh == true) {
+                          setState(() {
+                            _toolsFuture = ToolBorrowService()
+                                .fetchAvailableTools();
+                          });
                         }
                       },
 

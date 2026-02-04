@@ -57,7 +57,7 @@ class OfficerLoanService {
   Future<void> pickupLoan(int loanId) =>
       updateLoanStatus(loanId: loanId, newStatus: LoanStatus.borrowed);
 
-    Future<void> rejectedLoanWithOfficer({required int loanId}) async {
+  Future<void> rejectedLoanWithOfficer({required int loanId}) async {
     final officerId = UserSession.id;
 
     if (officerId.isEmpty) {
@@ -89,7 +89,7 @@ class OfficerLoanService {
     }
   }
 
-    Future<void> approveLoanWithOfficer({required int loanId}) async {
+  Future<void> approveLoanWithOfficer({required int loanId}) async {
     final officerId = UserSession.id;
 
     if (officerId.isEmpty) {
@@ -97,7 +97,6 @@ class OfficerLoanService {
     }
 
     try {
-      // Ambil loan_number dulu (penting!)
       final loanData = await _client
           .from('loans')
           .select('loan_number')
@@ -106,47 +105,36 @@ class OfficerLoanService {
 
       final int loanNumber = loanData['loan_number'] as int;
 
-      // Update status + officer
       await _client
           .from('loans')
           .update({'status_loan': 'approved', 'officer_id': officerId})
           .eq('loan_id', loanId);
 
-      // Log
       await _logService.createActivityLog(
         userId: officerId,
         action: ActionEnum.approve,
         entity: EntityEnum.loan,
         entityId: loanNumber,
-        // Optional: bisa tambah field_name & new_value kalau mau
         fieldName: 'status_loan',
         newValue: 'approved',
       );
     } catch (e) {
       throw Exception('Failed to approve loan: $e');
     }
-  } 
+  }
 
-    Future<void> returnLoan({
-  required int loanId,
-  required DateTime returnDate,
-  required Map<int, ({ReturnCondition condition, int? fineId})> itemReturns,
-  required double lateFine,
-  required String officerId,
-}) async {
-  try {
-    final loanData = await _client
-        .from('loans')
-        .select('loan_number')
-        .eq('loan_id', loanId)
-        .single();
-
-    final int loanNumber = loanData['loan_number'] as int? ?? 0; // fallback kalau null (hindari crash)
-
+  Future<void> _updateReturnCore({
+    required int loanId,
+    required String status,
+    required DateTime returnDate,
+    required double lateFine,
+    required String officerId,
+    required Map<int, ({ReturnCondition condition, int? fineId})> itemReturns,
+  }) async {
     await _client
         .from('loans')
         .update({
-          'status_loan': 'returned',
+          'status_loan': status,
           'return_date': returnDate.toIso8601String().split('T')[0],
           'late_fine': lateFine,
           'officer_id': officerId,
@@ -162,27 +150,42 @@ class OfficerLoanService {
           })
           .eq('loan_detail_id', entry.key);
     }
-
-    // Log - dipisah supaya tidak block proses return
-    try {
-      await _logService.createActivityLog(
-        userId: officerId,
-        action: ActionEnum.returned,
-        entity: EntityEnum.loan,
-        entityId: loanNumber,
-        fieldName: 'late_fine',
-        newValue: lateFine.toStringAsFixed(0), // biar rapi tanpa desimal kalau integer
-      );
-    } catch (logError) {
-      print('Activity log failed for returnLoan #$loanNumber: $logError');
-      // Tidak rethrow → return tetap berhasil meski log gagal
-    }
-
-  } catch (e) {
-    print('Return loan failed: $e');
-    rethrow;
   }
-}
+
+  Future<void> returnLoan({
+    required int loanId,
+    required DateTime returnDate,
+    required Map<int, ({ReturnCondition condition, int? fineId})> itemReturns,
+    required double lateFine,
+    required String officerId,
+  }) async {
+    final loanData = await _client
+        .from('loans')
+        .select('loan_number')
+        .eq('loan_id', loanId)
+        .single();
+
+    final loanNumber = loanData['loan_number'] as int;
+
+    await _updateReturnCore(
+      loanId: loanId,
+      status: 'returned',
+      returnDate: returnDate,
+      lateFine: lateFine,
+      officerId: officerId,
+      itemReturns: itemReturns,
+    );
+
+    await _logService.createActivityLog(
+      userId: officerId,
+      action: ActionEnum.returned,
+      entity: EntityEnum.loan,
+      entityId: loanNumber,
+      fieldName: 'status_loan',
+      newValue: 'returned',
+    );
+  }
+
   Future<void> returnLoanWithPenalty({
     required int loanId,
     required DateTime returnDate,
@@ -190,35 +193,17 @@ class OfficerLoanService {
     required String officerId,
     required Map<int, ({ReturnCondition condition, int? fineId})> itemReturns,
   }) async {
-    try {
-      // update loan -> penalty
-      await _client
-          .from('loans')
-          .update({
-            'status_loan': 'penalty',
-            'return_date': returnDate.toIso8601String(),
-            'late_fine': lateFine,
-            'officer_id': officerId,
-          })
-          .eq('loan_id', loanId);
-
-      // update detail items
-      for (final entry in itemReturns.entries) {
-        await _client
-            .from('loan_details')
-            .update({
-              'return_condition':
-                  entry.value.condition.name, // good / abrasion / damage
-              'damage_fine': entry.value.fineId,
-            })
-            .eq('loan_detail_id', entry.key);
-      }
-    } catch (e) {
-      throw Exception('Failed to return loan with penalty: $e');
-    }
+    await _updateReturnCore(
+      loanId: loanId,
+      status: 'penalty',
+      returnDate: returnDate,
+      lateFine: lateFine,
+      officerId: officerId,
+      itemReturns: itemReturns,
+    );
   }
 
-    Future<void> payPenaltyLoan({
+  Future<void> payPenaltyLoan({
     required int loanId,
     required String officerId,
   }) async {
@@ -238,7 +223,8 @@ class OfficerLoanService {
 
       await _logService.createActivityLog(
         userId: officerId,
-        action: ActionEnum.returned,  // atau buat ActionEnum.pay_penalty kalau mau spesifik
+        action: ActionEnum
+            .returned, 
         entity: EntityEnum.loan,
         entityId: loanNumber,
         fieldName: 'status_loan',

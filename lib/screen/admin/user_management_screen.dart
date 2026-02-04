@@ -7,6 +7,7 @@ import '../../models/user_model.dart';
 import '../../widgets/user_form_sheet.dart';
 import '../../services/auth/user_session.dart';
 import '../../services/auth/user_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -277,22 +278,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('User ${user.name} succesfully activated'),
-        ),
-      );
+      showToast(context, 'User ${user.name} successfully activated');
 
       await _fetchUsers();
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed activate: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showToast(context, 'Failed to activate user', isError: true);
     }
   }
 
@@ -306,20 +298,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         users.removeWhere((u) => u.id == user.id);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User ${user.name} succesfully deactivated')),
-      );
+      showToast(context, 'User ${user.name} successfully deactivated');
 
       await _fetchUsers();
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed deactivated user: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showToast(context, 'Failed to deactivate user', isError: true);
     }
   }
 
@@ -355,9 +340,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           }
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User succesfully updated!')),
-        );
+        showToast(context, 'User successfully updated!');
 
         await _fetchUsers();
       } else {
@@ -383,9 +366,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
         final name = result['name'] as String;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User succesfully created! Name: $name')),
-        );
+        showToast(context, 'User successfully created, name: $name');
 
         await _fetchUsers();
       }

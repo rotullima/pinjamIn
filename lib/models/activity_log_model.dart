@@ -70,7 +70,7 @@ class ActivityLog {
       case 'borrow': return ActionEnum.borrow;
       case 'returned': return ActionEnum.returned;
       default:
-      print('Unknown action ditemukan: "$action"'); // untuk debug
+      print('Unknown action ditemukan: "$action"'); 
       return ActionEnum.create;
   }
   }

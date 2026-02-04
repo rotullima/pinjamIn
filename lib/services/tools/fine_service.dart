@@ -52,7 +52,6 @@ class FineService {
         .select()
         .single();
 
-    // log
     await _logService.createActivityLog(
       userId: UserSession.id,
       action: ActionEnum.edit,

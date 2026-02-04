@@ -12,12 +12,10 @@ class DashboardService {
 
     if (role == 'admin') {
       final toolsList =
-          (await _client.from('items').select('item_id, status_item'))
+          (await _client.from('items').select('item_id'))
               as List<dynamic>;
       final toolsCount = toolsList.length;
-      final damagedCount = toolsList
-          .where((e) => e['status_item'] != 'good')
-          .length;
+      
 
       final usersCount =
           (await _client.from('profiles').select('profile_id')).length;
@@ -40,8 +38,7 @@ class DashboardService {
         DashboardStatModel(
           title: 'Tools',
           value: toolsCount,
-          subtitle: '$damagedCount damaged',
-        ),
+          subtitle: '',),
         DashboardStatModel(title: 'Users', value: usersCount, subtitle: ''),
         DashboardStatModel(
           title: 'Borrowed',

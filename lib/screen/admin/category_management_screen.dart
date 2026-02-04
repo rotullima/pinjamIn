@@ -288,21 +288,34 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     if (result == null) return;
 
     if (category == null) {
-      final newCat = await _service.createCategory(result);
-      setState(() {
-        categories.add(newCat);
-      });
+      try {
+        final newCat = await _service.createCategory(result);
+
+        setState(() {
+          categories.add(newCat);
+        });
+
+        showToast(context, 'Category added successfully');
+      } catch (e) {
+        showToast(context, 'Failed to add category', isError: true);
+      }
     } else {
-      final updated = await _service.updateCategory(
-        categoryId: category.id,
-        name: result,
-      );
+      try {
+        final updated = await _service.updateCategory(
+          categoryId: category.id,
+          name: result,
+        );
 
-      final index = categories.indexWhere((e) => e.id == category.id);
+        final index = categories.indexWhere((e) => e.id == category.id);
 
-      setState(() {
-        categories[index] = updated;
-      });
+        setState(() {
+          categories[index] = updated;
+        });
+
+        showToast(context, 'Category updated successfully');
+      } catch (e) {
+        showToast(context, 'Failed to update category', isError: true);
+      }
     }
   }
 }

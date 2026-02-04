@@ -12,7 +12,6 @@ class ToolBorrowService {
         name,
         image_item,
         stock_available,
-        status_item,
         is_active,
         categories (
           category_id,
@@ -24,9 +23,8 @@ class ToolBorrowService {
       .gte('stock_available', 1);
 
   print("Raw response dari Supabase:");
-  print(res);   // ← lihat bentuk data aslinya
+  print(res);   
 
-  // atau lebih detail:
   for (var row in res) {
     print("Row: $row");
     print("stock_available: ${row['stock_available']} (${row['stock_available'].runtimeType})");

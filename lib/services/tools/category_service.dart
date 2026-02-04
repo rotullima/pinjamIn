@@ -50,7 +50,6 @@ class CategoryService {
     required int categoryId,
     required String name,
   }) async {
-    // ambil old value dulu
     final oldRes = await _supabase
         .from('categories')
         .select('name')

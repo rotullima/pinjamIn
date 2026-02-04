@@ -26,7 +26,6 @@ class ActivityLogService {
 
       print('=== DEBUG: Total logs fetched: ${logs.length} ===');
       for (var log in logs.take(10)) {
-        // tampilkan 10 terbaru
         print(
           'Action: ${log.action.name} | '
           'Entity: ${log.entity.name} | '

@@ -20,7 +20,7 @@ class ToolFormSheet extends StatefulWidget {
 class _ToolFormSheetState extends State<ToolFormSheet> {
   late TextEditingController nameCtrl;
   late TextEditingController stockCtrl;
-  String selectedCondition = 'good';
+  late TextEditingController addAvailableCtrl;
   Uint8List? pickedImageBytes;
   CategoryModel? selectedCategory;
   List<CategoryModel> categories = [];
@@ -45,7 +45,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
     stockCtrl = TextEditingController(
       text: widget.tool?.stockTotal.toString() ?? '',
     );
-    selectedCondition = widget.tool?.statusItem ?? 'good';
+    addAvailableCtrl = TextEditingController(text: '0');
 
     _loadCategories();
   }
@@ -138,12 +138,7 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
               ),
 
               _input('Stock', stockCtrl, number: true),
-              _dropdown(
-                'Condition',
-                selectedCondition,
-                ['good', 'in_repair'],
-                (v) => setState(() => selectedCondition = v),
-              ),
+              _input('Available Stock', addAvailableCtrl, number: true),
 
               const SizedBox(height: 24),
 
@@ -217,48 +212,6 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dropdown(
-    String label,
-    String value,
-    List<String> items,
-    ValueChanged<String> onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: AppColors.background,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: value,
-                isExpanded: true,
-                items: items
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) => onChanged(v!),
               ),
             ),
           ),
@@ -363,16 +316,9 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
           .getPublicUrl(fileName);
     }
 
-    if (widget.tool == null) {
-      await ToolAdminService().createTool(
-        name: nameCtrl.text,
-        categoryId: selectedCategory!.id,
-        description: null,
-        imagePath: imageUrl,
-        stock: int.parse(stockCtrl.text),
-        statusItem: selectedCondition,
-      );
-    } else {
+    if (widget.tool != null) {
+      final addAvailable = int.parse(addAvailableCtrl.text);
+
       await ToolAdminService().updateTool(
         itemId: widget.tool!.itemId,
         name: nameCtrl.text,
@@ -380,8 +326,14 @@ class _ToolFormSheetState extends State<ToolFormSheet> {
         description: null,
         imagePath: imageUrl ?? widget.tool!.imagePath,
         stockTotal: int.parse(stockCtrl.text),
-        statusItem: selectedCondition,
       );
+
+      if (addAvailable > 0) {
+        await ToolAdminService().addAvailableStock(
+          itemId: widget.tool!.itemId,
+          amount: addAvailable,
+        );
+      }
     }
 
     Navigator.pop(context, true);

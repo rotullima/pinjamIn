@@ -9,7 +9,7 @@ import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
 import '../../services/officer/officer_loan_service.dart';
-import '../../widgets/notifications/confirm_snackbar.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class ReturningLoanScreen extends StatefulWidget {
   const ReturningLoanScreen({super.key});
@@ -106,17 +106,10 @@ class _ReturningLoanScreenState extends State<ReturningLoanScreen> {
                                     setState(() => _loans.remove(loan));
 
                                     if (result == 'returned') {
-                                      showConfirmSnackBar(
-                                        context,
-                                        'Loan returned',
-                                      );
+                                      showToast(context, 'Loan returned');
                                     } else if (result == 'penalty') {
-                                      showConfirmSnackBar(
-                                        context,
-                                        'Marked as penalty',
-                                      );
+                                      showToast(context, 'Marked as penalty');
                                     }
-
                                   },
                                 ),
                               ],

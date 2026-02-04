@@ -182,10 +182,7 @@ class _AdminLoanListScreenState extends State<AdminLoanListScreen> {
                           itemBuilder: (context, index) {
                             final loan = _filteredLoans[index];
                             final actions = _buildAdminActions(context, loan);
-                            return LoanListCard(
-                              data:loan,
-                              actions: actions,
-                            );
+                            return LoanListCard(data: loan, actions: actions);
                           },
                         ),
                 ),

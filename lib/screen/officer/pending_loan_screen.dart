@@ -4,11 +4,11 @@ import '../../widgets/app_header.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/app_search_field.dart';
 import '../../widgets/loan_card.dart';
-import '../../widgets/notifications/confirm_snackbar.dart';
 import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
 import '../../services/officer/officer_loan_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class PendingLoanScreen extends StatefulWidget {
   const PendingLoanScreen({super.key});
@@ -121,12 +121,12 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
                                         );
                                       });
 
-                                      showConfirmSnackBar(
+                                      showToast(
                                         context,
                                         'Loan rejected successfully',
                                       );
                                     } catch (e) {
-                                      showConfirmSnackBar(
+                                      showToast(
                                         context,
                                         'Failed to reject loan: $e',
                                       );
@@ -150,14 +150,15 @@ class _PendingLoanScreenState extends State<PendingLoanScreen> {
                                         );
                                       });
 
-                                      showConfirmSnackBar(
+                                      showToast(
                                         context,
                                         'Loan approved successfully',
                                       );
                                     } catch (e) {
-                                      showConfirmSnackBar(
+                                      showToast(
                                         context,
                                         'Failed to approve loan: $e',
+                                        isError: true,
                                       );
                                     }
                                   },

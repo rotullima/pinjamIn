@@ -18,7 +18,6 @@ class ToolAdminService {
       image_item,
       stock_total,
       stock_available,
-      status_item,
       is_active,
       categories (
         category_id,
@@ -36,7 +35,6 @@ class ToolAdminService {
     String? description,
     String? imagePath,
     required int stock,
-    required String statusItem,
   }) async {
     final insertRes = await _supabase
         .from('items')
@@ -47,7 +45,6 @@ class ToolAdminService {
           'image_item': imagePath,
           'stock_total': stock,
           'stock_available': stock,
-          'status_item': statusItem,
           'is_active': true,
         })
         .select('item_id')
@@ -69,7 +66,6 @@ class ToolAdminService {
     String? description,
     String? imagePath,
     required int stockTotal,
-    required String statusItem,
   }) async {
     final old = await _supabase
         .from('items')
@@ -101,7 +97,6 @@ class ToolAdminService {
           'image_item': imagePath,
           'stock_total': stockTotal,
           'stock_available': newAvailable,
-          'status_item': statusItem,
         })
         .eq('item_id', itemId);
 
@@ -115,6 +110,44 @@ class ToolAdminService {
       newValue: name,
     );
   }
+
+  Future<void> addAvailableStock({
+  required int itemId,
+  required int amount,
+}) async {
+  if (amount <= 0) return;
+
+  final item = await _supabase
+      .from('items')
+      .select('stock_total, stock_available')
+      .eq('item_id', itemId)
+      .single();
+
+  final int total = item['stock_total'];
+  final int available = item['stock_available'];
+
+  final int newAvailable = available + amount;
+
+  if (newAvailable > total) {
+    throw Exception('Stock available tidak boleh melebihi stock total');
+  }
+
+  await _supabase
+      .from('items')
+      .update({'stock_available': newAvailable})
+      .eq('item_id', itemId);
+
+  await _logService.createActivityLog(
+    userId: UserSession.id,
+    action: ActionEnum.edit,
+    entity: EntityEnum.item,
+    entityId: itemId,
+    fieldName: 'stock_available',
+    oldValue: available.toString(),
+    newValue: newAvailable.toString(),
+  );
+}
+
 
   Future<void> softDeleteTool(int itemId) async {
     await _supabase

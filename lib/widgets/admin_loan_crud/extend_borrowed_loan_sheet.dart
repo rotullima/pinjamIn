@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../models/loan_model.dart';
 import '../../services/admin/admin_loan_action_service.dart';
-import '../notifications/confirm_snackbar.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class ExtendBorrowedLoanSheet extends StatefulWidget {
   final LoanModel loan;
@@ -69,16 +69,16 @@ class _ExtendBorrowedLoanSheetState extends State<ExtendBorrowedLoanSheet> {
     final today = DateTime.now();
 
     if (_endDate.isBefore(today)) {
-      showConfirmSnackBar(context, 'the return date cannot be in the past');
+      showToast(context, 'the return date cannot be in the past');
       return;
     }
 
     try {
       await LoanActionService.extendLoan(widget.loan.loanId, _endDate);
-      showConfirmSnackBar(context, 'borrowed loan extended');
+      showToast(context, 'borrowed loan extended');
       Navigator.pop(context, true);
     } catch (e) {
-      showConfirmSnackBar(context, 'Fail extend: $e');
+      showToast(context, 'Failed to extend loan: $e');
     }
   }
 

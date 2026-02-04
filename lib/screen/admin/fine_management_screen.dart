@@ -8,6 +8,8 @@ import '../../widgets/tools/fine_form_sheet.dart';
 import '../../services/auth/user_session.dart';
 import '../../services/tools/fine_service.dart';
 import '../../models/tools/fine_model.dart';
+import '../../widgets/notifications/app_toast.dart';
+import 'package:intl/intl.dart';
 
 class FineManagementScreen extends StatefulWidget {
   const FineManagementScreen({super.key});
@@ -22,6 +24,13 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
   String _searchQuery = '';
   final FineService _service = FineService();
   late List<FineModel> fines = [];
+  final NumberFormat _rupiah = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+
+  String _formatRp(num v) => _rupiah.format(v);
 
   @override
   void initState() {
@@ -141,7 +150,7 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'Fine amount: ${fine.fineAmount.toInt()}',
+                                      'Fine amount: ${_formatRp(fine.fineAmount)}',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         color: AppColors.primary,
@@ -170,12 +179,28 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
                                         builder: (_) => ConfirmDeleteDialog(
                                           message: 'Sure to remove this fine?',
                                           onConfirm: () async {
-                                            await _service.deleteFine(fine.id);
-                                            setState(
-                                              () => fines.removeWhere(
-                                                (f) => f.id == fine.id,
-                                              ),
-                                            );
+                                            try {
+                                              await _service.deleteFine(
+                                                fine.id,
+                                              );
+
+                                              setState(() {
+                                                fines.removeWhere(
+                                                  (f) => f.id == fine.id,
+                                                );
+                                              });
+
+                                              showToast(
+                                                context,
+                                                'Fine deleted successfully',
+                                              );
+                                            } catch (e) {
+                                              showToast(
+                                                context,
+                                                'Failed to delete fine',
+                                                isError: true,
+                                              );
+                                            }
                                           },
                                         ),
                                       );
@@ -265,19 +290,38 @@ class _FineManagementScreenState extends State<FineManagementScreen> {
     if (result == null) return;
 
     if (fine == null) {
-      final newFine = await _service.createFine(
-        result['condition'],
-        result['fineAmount'],
-      );
-      setState(() => fines.add(newFine));
+      try {
+        final newFine = await _service.createFine(
+          result['condition'],
+          result['fineAmount'],
+        );
+
+        setState(() {
+          fines.add(newFine);
+        });
+
+        showToast(context, 'Fine added successfully');
+      } catch (e) {
+        showToast(context, 'Failed to add fine', isError: true);
+      }
     } else {
-      final updated = await _service.updateFine(
-        fineId: fine.id,
-        condition: result['condition'],
-        fineAmount: result['fineAmount'],
-      );
-      final index = fines.indexWhere((f) => f.id == fine.id);
-      setState(() => fines[index] = updated);
+      try {
+        final updated = await _service.updateFine(
+          fineId: fine.id,
+          condition: result['condition'],
+          fineAmount: result['fineAmount'],
+        );
+
+        final index = fines.indexWhere((f) => f.id == fine.id);
+
+        setState(() {
+          fines[index] = updated;
+        });
+
+        showToast(context, 'Fine updated successfully');
+      } catch (e) {
+        showToast(context, 'Failed to update fine', isError: true);
+      }
     }
   }
 }

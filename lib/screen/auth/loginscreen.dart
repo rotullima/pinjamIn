@@ -14,11 +14,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
   final AuthService _authService = AuthService();
+  bool _passwordVisible = false;
   bool _isValidEmail(String email) {
-  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-  return regex.hasMatch(email);
-}
-
+    final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return regex.hasMatch(email);
+  }
 
   @override
   void dispose() {
@@ -36,6 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Image.asset(
+                'assets/logo.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+              ),
               const Text(
                 'LOGIN',
                 style: TextStyle(
@@ -71,6 +77,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       hint: 'Password',
                       isPassword: true,
                       controller: _passwordCtrl,
+                      iconpassword: _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      onTogglePassword: () {
+                        setState(() {
+                          _passwordVisible = !_passwordVisible;
+                        });
+                      },
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -95,58 +109,59 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-  final email = _emailCtrl.text.trim();
-  final password = _passwordCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
 
-  if (email.isEmpty || password.isEmpty) {
-    _showError('Email dan password wajib diisi');
-    return;
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Email dan password wajib diisi');
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      _showError('Format email tidak valid');
+      return;
+    }
+
+    try {
+      await _authService.signIn(email: email, password: password);
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e.toString().replaceAll('Exception: ', ''));
+    }
   }
 
-  if (!_isValidEmail(email)) {
-    _showError('Format email tidak valid');
-    return;
-  }
-
-  try {
-    await _authService.signIn(
-      email: email,
-      password: password,
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
-
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    );
-  } catch (e) {
-    if (!mounted) return;
-    _showError(e.toString().replaceAll('Exception: ', ''));
   }
-}
-
-void _showError(String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      backgroundColor: Colors.red,
-    ),
-  );
-}
-
 
   Widget _buildInputField({
     required IconData icon,
     required String hint,
     required TextEditingController controller,
+    IconData? iconpassword,
+    VoidCallback? onTogglePassword,
     bool isPassword = false,
   }) {
     return TextField(
       controller: controller,
-      obscureText: isPassword,
+      obscureText: isPassword && !_passwordVisible,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: AppColors.primary),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(iconpassword, color: AppColors.primary),
+                onPressed: onTogglePassword,
+              )
+            : null,
         hintText: hint,
         filled: true,
         fillColor: AppColors.background,
@@ -162,4 +177,3 @@ void _showError(String message) {
     );
   }
 }
-

@@ -8,6 +8,7 @@ import '../../models/loan_actions.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/loan_model.dart';
 import '../../services/borrower/loan_list_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class LoanListScreen extends StatefulWidget {
   const LoanListScreen({super.key});
@@ -19,7 +20,8 @@ class LoanListScreen extends StatefulWidget {
 class _LoanListScreenState extends State<LoanListScreen> {
   bool isOpen = false;
   final TextEditingController _searchCtrl = TextEditingController();
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
   String _query = '';
   String _selectedStatus = 'borrowed';
 
@@ -43,9 +45,7 @@ class _LoanListScreenState extends State<LoanListScreen> {
 
   Future<void> _fetchLoans() async {
     try {
-      final loans = await LoanListService.fetchLoans(
-        borrowerNameQuery: '', 
-      );
+      final loans = await LoanListService.fetchLoans(borrowerNameQuery: '');
       final filteredByUser = loans.where(
         (loan) =>
             loan.borrowerName.toLowerCase() == UserSession.name.toLowerCase(),
@@ -196,36 +196,38 @@ class _LoanListScreenState extends State<LoanListScreen> {
                             if (loan.status == LoanStatus.borrowed) {
                               actions.add(
                                 LoanAction(
-  type: LoanActionType.returning,
-  label: 'Return',
-  onTap: () async {
-    setState(() {
-      loan.status = LoanStatus.returning;
-    });
+                                  type: LoanActionType.returning,
+                                  label: 'Return',
+                                  onTap: () async {
+                                    setState(() {
+                                      loan.status = LoanStatus.returning;
+                                    });
 
-    try {
-      await LoanListService.updateLoanStatus(
-        loanId: loan.loanId,
-        newStatus: LoanStatus.returning,
-      );
+                                    try {
+                                      await LoanListService.updateLoanStatus(
+                                        loanId: loan.loanId,
+                                        newStatus: LoanStatus.returning,
+                                      );
 
-      if (!mounted) return;
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-  SnackBar(content: Text('Loan status updated to returning')),
-);
-    } catch (e) {
-      if (!mounted) return;
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-  SnackBar(content: Text('Failed to update status: $e')),
+                                      if (!mounted) return;
+                                      showToast(
+                                        context,
+                                        'Loan status updated to returning',
+                                      );
+                                    } catch (e) {
+                                      if (!mounted) return;
+                                      showToast(
+                                        context,
+                                        'Failed to update status',
+                                        isError: true,
+                                      );
 
-      );
-      setState(() {
-        loan.status = LoanStatus.borrowed;
-      });
-    }
-  },
-)
-
+                                      setState(() {
+                                        loan.status = LoanStatus.borrowed;
+                                      });
+                                    }
+                                  },
+                                ),
                               );
                             }
 

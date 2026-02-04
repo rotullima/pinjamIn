@@ -5,6 +5,7 @@ import '../../widgets/app_header.dart';
 import '../../services/auth/user_session.dart';
 import '../../models/tools/tool_model.dart';
 import '../../services/borrower/borrrowing_service.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class LoanSummaryScreen extends StatefulWidget {
   final List<ToolModel> cart;
@@ -79,25 +80,24 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
 
   void _submitLoan() async {
     if (widget.cart.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
+      showToast(context, 'Cart is empty', isError: true);
+
       return;
     }
 
     if (_startDate == null || _endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('input start date & end date first')),
-      );
+      showToast(context, 'Input start date & end date first', isError: true);
+
       return;
     }
 
     if (_endDate!.isBefore(_startDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('end date must not be before the borrowing date'),
-        ),
+      showToast(
+        context,
+        'End date must not be before start date',
+        isError: true,
       );
+
       return;
     }
 
@@ -109,18 +109,12 @@ class _LoanSummaryScreenState extends State<LoanSummaryScreen> {
         items: widget.cart,
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Loan application successfully submitted!'),
-        ),
-      );
+      showToast(context, 'Loan application successfully submitted');
 
       widget.cart.clear();
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to submit loan: $e')));
+      showToast(context, 'Failed to submit loan', isError: true);
     }
   }
 

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../models/loan_model.dart';
 import '../../services/admin/admin_loan_action_service.dart';
-import '../notifications/confirm_snackbar.dart';
 import '../../widgets/admin_loan_crud/search_dropdown.dart';
+import '../../widgets/notifications/app_toast.dart';
 
 class AdminCreateLoanSheet extends StatefulWidget {
   const AdminCreateLoanSheet({super.key});
@@ -31,7 +31,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
   void initState() {
     super.initState();
     _startDate = DateTime.now();
-    _endDate = DateTime.now().add(const Duration(days: 7)); 
+    _endDate = DateTime.now().add(const Duration(days: 7));
     _startDateCtrl = TextEditingController(text: _fmt(_startDate));
     _endDateCtrl = TextEditingController(text: _fmt(_endDate));
 
@@ -48,7 +48,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
         isLoadingBorrowers = false;
       });
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed to load borrower: $e');
+      showToast(context, 'Failed to load borrower', isError: true);
       setState(() => isLoadingBorrowers = false);
     }
   }
@@ -62,7 +62,7 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
         isLoadingItems = false;
       });
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed to load tool: $e');
+      showToast(context, 'Failed to load tool', isError: true);
       setState(() => isLoadingItems = false);
     }
   }
@@ -107,15 +107,19 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
 
   Future<void> _submit() async {
     if (selectedBorrower == null) {
-      showConfirmSnackBar(context, 'Select borrower first!');
+      showToast(context, 'Select borrower first!', isError: true);
       return;
     }
     if (selectedItems.isEmpty) {
-      showConfirmSnackBar(context, 'Choose at least 1');
+      showToast(context, 'Choose at least 1 item', isError: true);
       return;
     }
     if (_endDate.isBefore(_startDate)) {
-      showConfirmSnackBar(context, 'The end date cannot be before the start date');
+      showToast(
+        context,
+        'The end date cannot be before the start date',
+        isError: true,
+      );
       return;
     }
 
@@ -127,13 +131,13 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
         startDate: _startDate,
         endDate: _endDate,
         itemIds: itemIds,
-        note: null, 
+        note: null,
       );
 
-      showConfirmSnackBar(context, 'Loan succesfully applied');
-      Navigator.pop(context, true); 
+      showToast(context, 'Loan successfully applied');
+      Navigator.pop(context, true);
     } catch (e) {
-      showConfirmSnackBar(context, 'Failed apply loan: $e');
+      showToast(context, 'Failed apply loan', isError: true);
     }
   }
 
@@ -167,55 +171,72 @@ class _AdminCreateLoanSheetState extends State<AdminCreateLoanSheet> {
 
                 _label('Borrower'),
                 _box(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   child: isLoadingBorrowers
                       ? const Center(child: CircularProgressIndicator())
                       : borrowers.isEmpty
-                          ? const Text('Tidak ada borrower tersedia', style: TextStyle(color: Colors.grey))
-                          : SearchDropdown<BorrowerModel>(
-                              items: borrowers,
-                              hint: 'Pilih borrower',
-                              label: (b) => b.name,
-                              onSelected: (b) {
-                                setState(() => selectedBorrower = b);
-                              },
-                            ),
+                      ? const Text(
+                          'Tidak ada borrower tersedia',
+                          style: TextStyle(color: Colors.grey),
+                        )
+                      : SearchDropdown<BorrowerModel>(
+                          items: borrowers,
+                          hint: 'Pilih borrower',
+                          label: (b) => b.name,
+                          onSelected: (b) {
+                            setState(() => selectedBorrower = b);
+                          },
+                        ),
                 ),
 
                 const SizedBox(height: 14),
 
                 _label('Items/Tools'),
 
-                ...selectedItems.map((item) => _box(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.name,
-                              style: const TextStyle(color: AppColors.primary),
-                            ),
+                ...selectedItems.map(
+                  (item) => _box(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(color: AppColors.primary),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.redAccent),
-                            onPressed: () => _removeItem(item),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.redAccent,
                           ),
-                        ],
-                      ),
-                    )),
+                          onPressed: () => _removeItem(item),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
                 if (showAddItem)
                   _box(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     child: isLoadingItems
                         ? const Center(child: CircularProgressIndicator())
                         : availableItems.isEmpty
-                            ? const Text('Tidak ada item tersedia', style: TextStyle(color: Colors.grey))
-                            : SearchDropdown<ItemModel>(
-                                items: availableItems,
-                                hint: 'Pilih item',
-                                label: (item) => item.name,
-                                onSelected: _addItem,
-                              ),
+                        ? const Text(
+                            'Tidak ada item tersedia',
+                            style: TextStyle(color: Colors.grey),
+                          )
+                        : SearchDropdown<ItemModel>(
+                            items: availableItems,
+                            hint: 'Pilih item',
+                            label: (item) => item.name,
+                            onSelected: _addItem,
+                          ),
                   ),
 
                 const SizedBox(height: 8),

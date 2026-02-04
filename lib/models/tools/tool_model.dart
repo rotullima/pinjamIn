@@ -5,7 +5,6 @@ class ToolModel {
   final int categoryId;
   final int stockAvailable;
   final int? stockTotal;
-  final String statusItem;
   final String? imagePath;
   final bool isActive;
 
@@ -16,7 +15,6 @@ class ToolModel {
     required this.categoryId,
     required this.stockAvailable,
     this.stockTotal,
-    required this.statusItem,
     this.imagePath,
     required this.isActive,
   });
@@ -32,11 +30,10 @@ class ToolModel {
       itemId: map['item_id'] as int,
       name: map['name'] as String? ?? 'Unknown Item',
       category: categoryMap['name'] as String? ?? 'Uncategorized',
-      categoryId: categoryMap['category_id'] as int? ?? 0,  // default 0 jika null
+      categoryId: categoryMap['category_id'] as int? ?? 0,  
       stockAvailable: map['stock_available'] as int? ?? 0,
-      stockTotal: map['stock_total'] as int?,              // ← sekarang boleh null
+      stockTotal: map['stock_total'] as int?,              
       imagePath: map['image_item'] as String?,
-      statusItem: map['status_item'] as String? ?? 'unknown',
       isActive: map['is_active'] as bool? ?? true,
     );
   }
